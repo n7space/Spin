@@ -562,9 +562,12 @@ cmpnd	: pfld			{ Embedded++;
 					owner = $1->sym->Snm;
 				}
 	  sfld			{ $$ = $1; $$->rgt = $3;
-	  			  /* TODO STRUCT UNION NEEDS FIXING*/
+	  			  /* TODO STRUCT UNION - analyze the consequences of this*/
 				  if ($3 && $1->sym->type != STRUCT && $1->sym->type != UNION)
-					$1->sym->type = UNION;
+				  {
+					printf("WARNING: Assigning STRUCT by default to %s\n", $1->sym->name);
+					$1->sym->type = STRUCT;
+				  }
 				  Embedded--;
 				  if (!Embedded && !NamesNotAdded
 				  &&  !$1->sym->type)

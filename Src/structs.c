@@ -12,7 +12,7 @@
 typedef struct UType {
 	Symbol *nm;	/* name of the type */
 	Lextok *cn;	/* contents */
-	struct UType *nxt;	/* linked list */	
+	struct UType *nxt;	/* linked list */
 	unsigned short type;
 } UType;
 
@@ -42,7 +42,7 @@ setuname(Lextok *n, unsigned short type)
 			return;
 		}
 
-	tmp = (UType *) emalloc(sizeof(UType));	
+	tmp = (UType *) emalloc(sizeof(UType));
 	tmp->nm = owner;
 	tmp->type = type;
 	tmp->cn = n;
@@ -103,6 +103,18 @@ getuname(Symbol *t)
 	return (Lextok *)0;
 }
 
+unsigned short
+getutype(Symbol *t)
+{	UType *tmp;
+
+	for (tmp = Unames; tmp; tmp = tmp->nxt)
+	{	if (!strcmp(t->name, tmp->nm->name))
+			return tmp->type;
+	}
+	fatal("%s is not a typename", t->name);
+	return 0;
+}
+
 void
 setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 {	int oln = lineno;
@@ -110,6 +122,7 @@ setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 	Lextok *m, *n;
 
 	m = getuname(t);
+	const unsigned short type = getutype(t);
 	for (n = p; n; n = n->rgt)
 	{	lineno = n->ln;
 		Fname = n->fn;
@@ -133,7 +146,8 @@ setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 			else if (strncmp(vis->sym->name, ":local:", (size_t) 7) == 0)
 				n->sym->hidden |= 64;
 		}
-		n->sym->type = t->type;	/* classification   */
+
+		n->sym->type = type;/* classification   */
 		n->sym->Slst = m;	/* structure itself */
 		n->sym->Snm  = t;	/* name of typedef  */
 		n->sym->Nid  = 0;	/* this is no chan  */
@@ -154,7 +168,7 @@ do_same(Lextok *n, Symbol *v, int xinit)
 
 	lineno = n->ln;
 	Fname = n->fn;
-	
+
 	/* n->sym->type == STRUCT
 	 * index:		n->lft
 	 * subfields:		n->rgt
@@ -285,14 +299,16 @@ Sym_typ(Lextok *t)
 
 	if (!s) return 0;
 
-	// TODO STRUCT UNION ANALYZE
 	if (s->type != STRUCT && s->type != UNION)
 		return s->type;
 
+	// TODO STRUCT UNION - analyze impact of returning STRUCT from here
 	if (!t->rgt
 	||   t->rgt->ntyp != '.'	/* gh: had ! in wrong place */
-	||  !t->rgt->lft)
+	||  !t->rgt->lft) {
+		printf("WARNING: returning STRUCT for %s\n", s->name);
 		return STRUCT;		/* not a field reference */
+	}
 
 	return Sym_typ(t->rgt->lft);
 }
@@ -506,7 +522,7 @@ dump_struct(Symbol *z, char *prefix, RunList *r)
 			sprintf(eprefix, "%s[%d]", prefix, ix);
 		else
 			strcpy(eprefix, prefix);
-		
+
 		for (fp = z->Sval[ix]; fp; fp = fp->rgt)
 		for (tl = fp->lft; tl; tl = tl->rgt)
 		{	if (tl->sym->type == STRUCT || tl->sym->type == UNION)
