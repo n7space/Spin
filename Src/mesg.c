@@ -88,7 +88,7 @@ qmake(Symbol *s)
 	q->stepnr    = (int *) emalloc(i*sizeof(int));
 
 	for (m = s->ini->rgt, i = 0; m; m = m->rgt)
-	{	if (m->sym && m->ntyp == STRUCT)
+	{	if (m->sym && (m->ntyp == STRUCT || m->ntyp == UNION))
 		{	i = Width_set(q->fld_width, i, getuname(m->sym));
 		} else
 		{	if (m->sym)
@@ -543,7 +543,7 @@ channm(Lextok *n)
 		strcat(GBuf, n->sym->name);
 	else if (n->sym->type == NAME)
 		strcat(GBuf, lookup(n->sym->name)->name);
-	else if (n->sym->type == STRUCT)
+	else if (n->sym->type == STRUCT || n->sym->type == UNION)
 	{	Symbol *r = n->sym;
 		if (r->context)
 		{	r = findloc(r);
@@ -780,7 +780,8 @@ nochan_manip(Lextok *p, Lextok *n, int d)	/* p=lhs n=rhs */
 	if (!n
 	||  !p
 	||  !p->sym
-	||   p->sym->type == STRUCT)
+	||   p->sym->type == STRUCT
+	||   p->sym->type == UNION)
 	{	/* if a struct, assignments to structure fields arent checked yet */
 		return;
 	}

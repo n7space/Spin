@@ -423,7 +423,7 @@ void	set_lab(Symbol *, Element *);
 void	setmtype(Lextok *, Lextok *);
 void	setpname(Lextok *);
 void	setptype(Lextok *, Lextok *, int, Lextok *);
-void	setuname(Lextok *);
+void	setuname(Lextok *, unsigned short);
 void	setutype(Lextok *, Symbol *, Lextok *);
 void	setxus(Lextok *, int);
 void	Srand(unsigned);

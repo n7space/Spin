@@ -104,7 +104,7 @@ AST_isini(Lextok *n)	/* is this an initialized channel */
 	if (s->type == CHAN)
 		return (s->ini->ntyp == CHAN); /* freshly instantiated */
 
-	if (s->type == STRUCT && n->rgt)
+	if ((s->type == STRUCT || s->type == UNION) && n->rgt)
 		return AST_isini(n->rgt->lft);
 
 	return 0;
@@ -123,7 +123,7 @@ AST_var(Lextok *n, Symbol *s, int toplevel)
 	}
 	printf("%s", s->name); /* array indices ignored */
 
-	if (s->type == STRUCT && n && n->rgt && n->rgt->lft)
+	if ((s->type == STRUCT || s->type == UNION) && n && n->rgt && n->rgt->lft)
 	{	printf(":");
 		AST_var(n->rgt->lft, n->rgt->lft->sym, 0);
 	}
@@ -137,7 +137,7 @@ name_def_indices(Lextok *n, int code)
 	if (n->sym->nel > 1 || n->sym->isarray)
 		def_use(n->lft, code);		/* process the index */
 
-	if (n->sym->type == STRUCT		/* and possible deeper ones */
+	if ((n->sym->type == STRUCT || n->sym->type == UNION)		/* and possible deeper ones */
 	&&  n->rgt)
 		name_def_indices(n->rgt->lft, code);
 }
@@ -508,7 +508,7 @@ AST_mutual(Lextok *a, Lextok *b, int toplevel)
 	if (strcmp(as->name, bs->name) != 0)
 		return 0;
 
-	if (as->type == STRUCT && a->rgt && b->rgt)	/* we know that a and b are not null */
+	if ((as->type == STRUCT || as->type == UNION) && a->rgt && b->rgt)	/* we know that a and b are not null */
 		return AST_mutual(a->rgt->lft, b->rgt->lft, 0);
 
 	return 1;
@@ -1200,6 +1200,7 @@ AST_dump_rel(void)
 		if (!s->setat
 		&&  (s->type != MTYPE || s->ini->ntyp != CONST)
 		&&  s->type != STRUCT	/* report only fields */
+		&&  s->type != UNION	/* report only fields */
 		&&  s->type != PROCTYPE
 		&&  !s->owner
 		&&  sputtype(buf, s->type))

@@ -161,7 +161,7 @@ undostmnt(Lextok *now, int m)
 		break;
 
 	case ASGN:
-		if (check_track(now) == STRUCT) { break; }
+		if (check_track(now) == STRUCT || check_track(now) == UNION) { break; }
 
 		nocast=1; putstmnt(fd_tb, now->lft, m);
 		nocast=0; fprintf(fd_tb, " = trpt->bup.oval");

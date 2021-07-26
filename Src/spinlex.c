@@ -1797,6 +1797,7 @@ static struct {
 	{"unsigned",	TYPE,		UNSIGNED,	0},
 	{"xr",		XU,		XR,		0},
 	{"xs",		XU,		XS,		0},
+	{"union",	UNION,	0,		0},
 	{0, 		0,		0,		0},
 };
 

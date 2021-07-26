@@ -942,7 +942,7 @@ genconditionals(void)
 		{	if (last == s->Nid) continue;	/* chan array */
 			last = s->Nid;
 			Docase(s, j, last);
-		} else if (s->type == STRUCT)
+		} else if (s->type == STRUCT || s->type == UNION)
 		{	/* struct may contain a chan */
 			char pregat[128];
 			strcpy(pregat, "");
@@ -1098,7 +1098,7 @@ static int
 getNid(Lextok *n)
 {
 	if (n->sym
-	&&  n->sym->type == STRUCT
+	&&  (n->sym->type == STRUCT || n->sym->type == UNION)
 	&&  n->rgt && n->rgt->lft)
 		return getNid(n->rgt->lft);
 
@@ -1440,7 +1440,7 @@ nr_bup(Element *e)
 
 	switch (e->n->ntyp) {
 	case ASGN:
-		if (check_track(e->n) == STRUCT) { break; }
+		if (check_track(e->n) == STRUCT || check_track(e->n) == UNION) { break; }
 		nr++;
 		break;
 	case  'r':
@@ -2916,6 +2916,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 					&&  v->lft->ntyp != EVAL
 					&&  v->lft->sym
 					&&  v->lft->sym->type != STRUCT	/* not a struct */
+					&&  v->lft->sym->type != UNION	/* not a union */
 					&&  (v->lft->sym->nel == 1 && v->lft->sym->isarray == 0) /* not array */
 					&&  strcmp(v->lft->sym->name, "_") != 0)
 					for (w = v->rgt; w; w = w->rgt)
@@ -3137,7 +3138,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		break;
 
 	case ASGN:
-		if (check_track(now) == STRUCT) { break; }
+		if (check_track(now) == STRUCT || check_track(now) == UNION) { break; }
 
 		if (has_enabled || has_priority)
 		fprintf(fd, "if (TstOnly) return 1; /* T3 */\n\t\t");
@@ -3450,7 +3451,7 @@ putname(FILE *fd, char *pre, Lextok *n, int m, char *suff) /* varref */
 		{	fatal("ref to scalar '%s' using array index", (char *) ptr);
 	}	}
 
-	if (s->type == STRUCT && n->rgt && n->rgt->lft)
+	if ((s->type == STRUCT || s->type == UNION) && n->rgt && n->rgt->lft)
 	{	putname(fd, ".", n->rgt->lft, m, "");
 	}
 shortcut:

@@ -74,6 +74,7 @@ static	int  Embedded = 0, inEventMap = 0, has_ini = 0;
 %token	CONST TYPE XU			/* val */
 %token	NAME UNAME PNAME INAME		/* sym */
 %token	STRING CLAIM TRACE INIT	LTL	/* sym */
+%token  UNION
 
 %right	ASGN
 %left	SND O_SND RCV R_RCV /* SND doubles as boolean negation */
@@ -257,17 +258,33 @@ events : TRACE		{ context = $1->sym;
 			}
 	;
 
-utype	: TYPEDEF NAME '{' 	{  if (context)
+utype	: 
+
+TYPEDEF UNION NAME '{' 	{  if (context)
+				   { fatal("typedef %s must be global",
+					$3->sym->name);
+				   }
+				   owner = $3->sym;
+				   in_seq = $1->ln;
+				}
+	  decl_lst '}'		{ setuname($6, UNION);
+				  owner = ZS;
+				  in_seq = 0;
+				}
+|
+
+TYPEDEF NAME '{' 	{  if (context)
 				   { fatal("typedef %s must be global",
 					$2->sym->name);
 				   }
 				   owner = $2->sym;
 				   in_seq = $1->ln;
 				}
-	  decl_lst '}'		{ setuname($5);
+	  decl_lst '}'		{ setuname($5, STRUCT);
 				  owner = ZS;
 				  in_seq = 0;
 				}
+
 	;
 
 nm	: NAME			{ $$ = $1; }
@@ -541,12 +558,13 @@ pfld	: NAME			{ $$ = nn($1, NAME, ZN, ZN);
 	;
 
 cmpnd	: pfld			{ Embedded++;
-				  if ($1->sym->type == STRUCT)
+				  if (($1->sym->type == STRUCT) || ($1->sym->type == UNION))
 					owner = $1->sym->Snm;
 				}
 	  sfld			{ $$ = $1; $$->rgt = $3;
-				  if ($3 && $1->sym->type != STRUCT)
-					$1->sym->type = STRUCT;
+	  			  /* TODO STRUCT UNION NEEDS FIXING*/
+				  if ($3 && $1->sym->type != STRUCT && $1->sym->type != UNION)
+					$1->sym->type = UNION;
 				  Embedded--;
 				  if (!Embedded && !NamesNotAdded
 				  &&  !$1->sym->type)

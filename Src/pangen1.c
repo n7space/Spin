@@ -38,7 +38,8 @@ extern void	c_stack_size(FILE *);
 
 static Symbol	*LstSet=ZS;
 static int	acceptors=0, progressors=0, nBits=0;
-static int	Types[] = { UNSIGNED, BIT, BYTE, CHAN, MTYPE, SHORT, INT, STRUCT };
+static int	Types[] = { UNSIGNED, BIT, BYTE, CHAN, MTYPE, SHORT, INT, STRUCT, UNION };
+static int  Types_Count = sizeof(Types)/sizeof(int);
 
 static int	doglobal(char *, int);
 static void	dohidden(void);
@@ -580,7 +581,7 @@ dolocal(FILE *ofd, char *pre, int dowhat, int p, char *s, enum btypes b)
 				k++;
 		}	}
 	} else
-	{	for (j = 0; j < 8; j++)
+	{	for (j = 0; j < Types_Count; j++)
 		for (h = 0; h <= 1; h++)
 		for (walk = all_names; walk; walk = walk->next)
 		{	sp = walk->entry;
@@ -691,6 +692,13 @@ c_var(FILE *fd, char *pref, Symbol *sp)
 		sprintf(buf, "%s%s.", pref, sp->name);
 		c_struct(fd, buf, sp);
 		break;
+	case UNION:
+		/* c_struct(fd, pref, sp); */
+		fprintf(fd, "\t\tprintf(\"\t(union %s)\\n\");\n",
+			sp->name);
+		sprintf(buf, "%s%s.", pref, sp->name);
+		c_struct(fd, buf, sp);
+		break;		
 	case MTYPE:
 	case BIT:   case BYTE:
 	case SHORT: case INT:
@@ -830,7 +838,7 @@ doglobal(char *pre, int dowhat)
 	Symbol *sp;
 	int j, cnt = 0;
 
-	for (j = 0; j < 8; j++)
+	for (j = 0; j < Types_Count; j++)
 	for (walk = all_names; walk; walk = walk->next)
 	{	sp = walk->entry;
 		if (!sp->context
@@ -865,7 +873,7 @@ dohidden(void)
 	Symbol *sp;
 	int j;
 
-	for (j = 0; j < 8; j++)
+	for (j = 0; j < Types_Count; j++)
 	for (walk = all_names; walk; walk = walk->next)
 	{	sp = walk->entry;
 		if ((sp->hidden&1)
@@ -903,7 +911,7 @@ do_var(FILE *ofd, int dowhat, char *s, Symbol *sp,
 		}	}
 		/* fall thru */
 	case INIV:
-		if (sp->type == STRUCT)
+		if (sp->type == STRUCT || sp->type == UNION)
 		{	/* struct may contain a chan */
 			walk_struct(ofd, dowhat, s, sp, pre, sep, ter);
 			break;
@@ -1177,7 +1185,7 @@ put_pinit(ProcList *P)
 			t->sym->name);
 		}
 		fprintf(fd_tc, "\t\t((P%d *)pptr(h))->", i);
-		if (t->sym->type == STRUCT)
+		if (t->sym->type == STRUCT || t->sym->type == UNION)
 		{	if (full_name(fd_tc, t, t->sym, 1))
 			{	lineno = t->ln;
 				Fname  = t->fn;
@@ -1326,6 +1334,14 @@ typ2c(Symbol *sp)
 			sp->name);
 		LstSet = ZS;
 		break;
+	case UNION:
+		if (!sp->Snm)
+			fatal("undeclared union element %s", sp->name);
+		fprintf(fd_th, "\tunion %s %s",
+			sp->Snm->name,
+			sp->name);
+		LstSet = ZS;
+		break;		
 	case CODE_FRAG:
 	case PREDEF:
 		return;

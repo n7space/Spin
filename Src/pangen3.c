@@ -439,7 +439,7 @@ comwork(FILE *fd, Lextok *now, int m)
 			break;	
 
 	case ASGN:
-			if (check_track(now) == STRUCT) { break; }
+			if (check_track(now) == STRUCT || check_track(now) == UNION) { break; }
 			comwork(fd,now->lft,m);
 			fprintf(fd," = ");
 			comwork(fd,now->rgt,m);
