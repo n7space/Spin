@@ -1,4 +1,5 @@
 #Spin integration tests, based on the README_tests.txt and the provided examples
+
 BASE_DIR=../..
 SPIN?=${BASE_DIR}/Src/spin
 MODEL_DIR=${BASE_DIR}/Examples
@@ -9,15 +10,27 @@ PAN=pan
 CREATE_TEST_DIR=mkdir -p ${TEST_DIR}
 DELETE_TEST_DIR=rm -r ${TEST_DIR}
 
-.PHONY : check \
+TESTS= \
 	test_hello \
-	test_loops
+	test_loops \
+	test_loops_cycles \
+	test_loops_cycles_playback \
+	test_loops_cycles_avoid_progress \
+	test_partial_order_reduction_enabled \
+	test_partial_order_reduction_disabled \
+	test_rng \
+	test_ltl_generation
 
-check: test_hello \
-	test_loops
+.SILENT : ${TESTS} \
+	test_rng_files
 
-#test 1	check that you can run a simulation
+.PHONY : check ${TESTS}
+
+check: ${TESTS}
+
+#Test 1: check that you can run a simulation
 test_hello:
+	echo "Test 1: check that you can run a simulation"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
 	${SPIN} -run ${MODEL_DIR}/hello.pml > hello.output
@@ -25,8 +38,9 @@ test_hello:
 	grep -q "3 states, stored" ${TEST_DIR}/hello.output
 	${DELETE_TEST_DIR}
 
-#test 2	a basic reachability check (safety)
+#Test 2: a basic reachability check (safety)
 test_loops:
+	echo "Test 2: a basic reachability check (safety)"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
 	${SPIN} -a ${MODEL_DIR}/loops.pml && \
@@ -39,3 +53,145 @@ test_loops:
 	grep -q "0 atomic steps" ${TEST_DIR}/loops.output
 	${DELETE_TEST_DIR}
 
+#Test 3: cycle detection check (liveness)
+test_loops_cycles:
+	echo "Test 3: cycle detection check (liveness)"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${CC} -DNOREDUCE -o ${PAN} pan.c && \
+	./${PAN} -a > loops.output
+	grep -q "pan:1: acceptance cycle (at depth 0)" ${TEST_DIR}/loops.output
+	grep -q "pan: wrote loops.pml.trail" ${TEST_DIR}/loops.output
+	grep -q "State-vector 12 byte, depth reached 11, errors: 1" ${TEST_DIR}/loops.output
+	grep -q "13 states, stored (15 visited)" ${TEST_DIR}/loops.output
+	grep -q "2 states, matched" ${TEST_DIR}/loops.output
+	grep -q "17 transitions (= visited+matched)" ${TEST_DIR}/loops.output
+	grep -q "0 atomic steps" ${TEST_DIR}/loops.output
+	${DELETE_TEST_DIR}
+
+#Test 4: guided simulation check (playback the error trail found in test 3)
+test_loops_cycles_playback:
+	echo "Test 4: guided simulation check (playback the error trail found in test 3)"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${CC} -DNOREDUCE -o ${PAN} pan.c && \
+	./${PAN} -a > loops.output && \
+	cp ${MODEL_DIR}/loops.pml loops.pml && \
+	${SPIN} -t -p loops.pml > loops_replay.output
+	grep -q "<<<<<START OF CYCLE>>>>>"				  	    ${TEST_DIR}/loops_replay.output
+	grep -q "1:\W*proc  0 (loop:1) loops.pml:5 (state 1)"   ${TEST_DIR}/loops_replay.output
+	grep -q "2:\W*proc  0 (loop:1) loops.pml:7 (state 2)"   ${TEST_DIR}/loops_replay.output
+	grep -q "3:\W*proc  0 (loop:1) loops.pml:7 (state 3)"   ${TEST_DIR}/loops_replay.output
+	grep -q "4:\W*proc  0 (loop:1) loops.pml:10 (state 8)"  ${TEST_DIR}/loops_replay.output
+	grep -q "5:\W*proc  0 (loop:1) loops.pml:5 (state 1)"   ${TEST_DIR}/loops_replay.output
+	grep -q "6:\W*proc  0 (loop:1) loops.pml:7 (state 2)"   ${TEST_DIR}/loops_replay.output
+	grep -q "7:\W*proc  0 (loop:1) loops.pml:7 (state 3)"   ${TEST_DIR}/loops_replay.output
+	grep -q "8:\W*proc  0 (loop:1) loops.pml:10 (state 8)"  ${TEST_DIR}/loops_replay.output
+	grep -q "9:\W*proc  0 (loop:1) loops.pml:5 (state 1)"   ${TEST_DIR}/loops_replay.output
+	grep -q "10:\W*proc  0 (loop:1) loops.pml:8 (state 4)"  ${TEST_DIR}/loops_replay.output
+	grep -q "11:\W*proc  0 (loop:1) loops.pml:8 (state 5)"  ${TEST_DIR}/loops_replay.output
+	grep -q "spin: loops.pml:10, Error: value (-1->255 (8)) truncated in assignment" \
+														    ${TEST_DIR}/loops_replay.output
+	grep -q "12:\W*proc  0 (loop:1) loops.pml:10 (state 8)" ${TEST_DIR}/loops_replay.output
+	grep -q "spin: trail ends after 12 steps"               ${TEST_DIR}/loops_replay.output
+	grep -q "#processes: 1"                                 ${TEST_DIR}/loops_replay.output
+	grep -q "12:\W*proc  0 (loop:1) loops.pml:4 (state 9)"  ${TEST_DIR}/loops_replay.output
+	${DELETE_TEST_DIR}
+
+#Test 5: try to find a cycle that avoids the progress labels (there are none)
+test_loops_cycles_avoid_progress:
+	echo "Test 5: try to find a cycle that avoids the progress labels (there are none)"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${CC} -DNP -DNOREDUCE -o ${PAN} pan.c && \
+	./${PAN} -l > loops.output
+	grep -q "State-vector 20 byte, depth reached 23, errors: 0" ${TEST_DIR}/loops.output
+	grep -q "27 states, stored (39 visited)" ${TEST_DIR}/loops.output
+	grep -q "28 states, matched" ${TEST_DIR}/loops.output
+	grep -q "67 transitions (= visited+matched)" ${TEST_DIR}/loops.output
+	grep -q "0 atomic steps" ${TEST_DIR}/loops.output
+	grep -q "unreached in proctype loop" ${TEST_DIR}/loops.output
+	grep -q "loops.pml:12, state 12, \"-end-\"" ${TEST_DIR}/loops.output
+	${DELETE_TEST_DIR}
+
+#Test 6: check partial order reduction algorithm -- first disable it
+test_partial_order_reduction_disabled:
+	echo "Test 6: check partial order reduction algorithm -- first disable it"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -a ${MODEL_DIR}/leader0.pml && \
+	${CC} -DSAFETY -DNOREDUCE -DNOCLAIM -o ${PAN} pan.c && \
+	./${PAN} -c0 -n > leader0.output
+	grep -q "errors: 0" ${TEST_DIR}/leader0.output
+	grep -q "15779 states, stored" ${TEST_DIR}/leader0.output
+	grep -q "42402 states, matched" ${TEST_DIR}/leader0.output
+	grep -q "58181 transitions (= stored+matched)" ${TEST_DIR}/leader0.output
+	${DELETE_TEST_DIR}
+
+#Test 6b: now leave p.o. reduction enabled (i.e., do not disable it)
+test_partial_order_reduction_enabled:
+	echo "Test 6b: now leave p.o. reduction enabled (i.e., do not disable it)"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -a ${MODEL_DIR}/leader0.pml && \
+	${CC} -DSAFETY -DNOCLAIM -o ${PAN} pan.c && \
+	./${PAN} -c0 -n > leader0.output
+	grep -q "errors: 0" ${TEST_DIR}/leader0.output
+	grep -q "97 states, stored" ${TEST_DIR}/leader0.output
+	grep -q "0 states, matched" ${TEST_DIR}/leader0.output
+	grep -q "97 transitions (= stored+matched)" ${TEST_DIR}/leader0.output
+	${DELETE_TEST_DIR}
+
+#Test 7: check random number generator
+#	The numbers in the array should tend to the ratio
+#	1:2:3:4 if the random number generator works properly.
+#	array index 0 remains unused (it's the pid of the init
+#	process)
+
+# Files have to be prepared in a separate rule to avoid premature shell expansion
+test_rng_files:
+	echo "Test 7: check random number generator"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -o6 -p -g -u10000 ${MODEL_DIR}/priorities.pml \
+		> priorities.output
+	grep "a\[1\] = " ${TEST_DIR}/priorities.output | tail -1 | sed "s/a\[1\] = //" | xargs \
+		> ${TEST_DIR}/a1.value
+	grep "a\[2\] = " ${TEST_DIR}/priorities.output | tail -1 | sed "s/a\[2\] = //" | xargs \
+		> ${TEST_DIR}/a2.value
+	grep "a\[3\] = " ${TEST_DIR}/priorities.output | tail -1 | sed "s/a\[3\] = //" | xargs \
+		> ${TEST_DIR}/a3.value
+	grep "a\[4\] = " ${TEST_DIR}/priorities.output | tail -1 | sed "s/a\[4\] = //" | xargs \
+		> ${TEST_DIR}/a4.value
+
+# Actual test, checking the generated values
+test_rng: test_rng_files	
+	expr $(shell cat ${TEST_DIR}/a1.value) \> 250 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a1.value) \< 350 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a2.value) \> 500 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a2.value) \< 700 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a3.value) \> 750 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a3.value) \< 1050 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a4.value) \> 1000 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a4.value) \< 1400 > /dev/null
+	${DELETE_TEST_DIR}
+
+#Test 8: test the generation of never claims from LTL formulae:
+test_ltl_generation:
+	echo "Test 8: test the generation of never claims from LTL formulae"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -f "[] ( p U ( <> q ))" > ltl_generation.output
+	grep -q "T0_init:" ${TEST_DIR}/ltl_generation.output
+	grep -q "do" ${TEST_DIR}/ltl_generation.output
+	grep -q ":: ((q)) -> goto accept_S9" ${TEST_DIR}/ltl_generation.output
+	grep -q ":: (1) -> goto T0_init" ${TEST_DIR}/ltl_generation.output
+	grep -q "od;" ${TEST_DIR}/ltl_generation.output
+	grep -q "accept_S9:" ${TEST_DIR}/ltl_generation.output
+	grep -q "do" ${TEST_DIR}/ltl_generation.output
+	grep -q ":: (1) -> goto T0_init" ${TEST_DIR}/ltl_generation.output
+	grep -q "od;" ${TEST_DIR}/ltl_generation.output
+	${DELETE_TEST_DIR}
