@@ -10,7 +10,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build
-        run: make -f Src/makefile spin
+        run: make -C Src spin
 
       - name: Check
-        run: make -f Test/makefile check
+        run: make -C Test check

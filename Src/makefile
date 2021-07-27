@@ -5,8 +5,8 @@
 # Tool documentation is available at http://spinroot.com
 
 CC?=gcc
-#CFLAGS?=-O2 -DNXT -Wall -pedantic -g
-CFLAGS?=-DNXT -Wall -pedantic -g
+
+CFLAGS?=-O2 -DNXT -Wall -pedantic -g
 	# on some systems add: -I/usr/include
 	# on a PC:    make CFLAGS="-O2 -DNXT -DPC"
 	# on Solaris: make CFLAGS="-O2 -DNXT -DSOLARIS"
@@ -46,10 +46,9 @@ install: spin
 
 spin.o:	makefile spin.y
 	$(YACC) $(YFLAGS) spin.y
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c y?tab.c	
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c y?tab.c
+	rm -f y?tab.c
 	mv y?tab.o spin.o
-
-#rm -f y?tab.c
 
 $(SPIN_OS): makefile spin.h spin.o
 
