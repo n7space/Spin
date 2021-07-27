@@ -2,7 +2,8 @@
 
 BASE_DIR=../..
 SPIN?=${BASE_DIR}/Src/spin
-MODEL_DIR=${BASE_DIR}/Examples
+EXAMPLE_MODEL_DIR=${BASE_DIR}/Examples
+USER_TYPES_MODEL_DIR=${BASE_DIR}/Test/UserTypes
 TEST_DIR=Out
 
 CC?=gcc
@@ -10,7 +11,7 @@ PAN=pan
 CREATE_TEST_DIR=mkdir -p ${TEST_DIR}
 DELETE_TEST_DIR=rm -r ${TEST_DIR}
 
-TESTS= \
+EXAMPLE_TESTS= \
 	test_hello \
 	test_loops \
 	test_loops_cycles \
@@ -21,19 +22,25 @@ TESTS= \
 	test_rng \
 	test_ltl_generation
 
-.SILENT : ${TESTS} \
+TYPEDEF_TESTS= \
+	test_nested_typedef \
+	test_typedef_for_channel \
+	test_typedef_for_global_data \
+	test_typedef_for_local_data
+
+.SILENT : ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} \
 	test_rng_files
 
-.PHONY : check ${TESTS}
+.PHONY : check ${EXAMPLE_TESTS} ${TYPEDEF_TESTS}
 
-check: ${TESTS}
+check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS}
 
 #Test 1: check that you can run a simulation
 test_hello:
 	echo "Test 1: check that you can run a simulation"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -run ${MODEL_DIR}/hello.pml > hello.output
+	${SPIN} -run ${EXAMPLE_MODEL_DIR}/hello.pml > hello.output
 	grep -q "State-vector 12 byte, depth reached 2, errors: 0" ${TEST_DIR}/hello.output
 	grep -q "3 states, stored" ${TEST_DIR}/hello.output
 	${DELETE_TEST_DIR}
@@ -43,7 +50,7 @@ test_loops:
 	echo "Test 2: a basic reachability check (safety)"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${SPIN} -a ${EXAMPLE_MODEL_DIR}/loops.pml && \
 	${CC} -DNOREDUCE -o ${PAN} pan.c && \
 	./${PAN} > loops.output
 	grep -q "State-vector 12 byte, depth reached 11, errors: 0" ${TEST_DIR}/loops.output
@@ -58,7 +65,7 @@ test_loops_cycles:
 	echo "Test 3: cycle detection check (liveness)"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${SPIN} -a ${EXAMPLE_MODEL_DIR}/loops.pml && \
 	${CC} -DNOREDUCE -o ${PAN} pan.c && \
 	./${PAN} -a > loops.output
 	grep -q "pan:1: acceptance cycle (at depth 0)" ${TEST_DIR}/loops.output
@@ -75,10 +82,10 @@ test_loops_cycles_playback:
 	echo "Test 4: guided simulation check (playback the error trail found in test 3)"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${SPIN} -a ${EXAMPLE_MODEL_DIR}/loops.pml && \
 	${CC} -DNOREDUCE -o ${PAN} pan.c && \
 	./${PAN} -a > loops.output && \
-	cp ${MODEL_DIR}/loops.pml loops.pml && \
+	cp ${EXAMPLE_MODEL_DIR}/loops.pml loops.pml && \
 	${SPIN} -t -p loops.pml > loops_replay.output
 	grep -q "<<<<<START OF CYCLE>>>>>"				  	    ${TEST_DIR}/loops_replay.output
 	grep -q "1:\W*proc  0 (loop:1) loops.pml:5 (state 1)"   ${TEST_DIR}/loops_replay.output
@@ -105,7 +112,7 @@ test_loops_cycles_avoid_progress:
 	echo "Test 5: try to find a cycle that avoids the progress labels (there are none)"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -a ${MODEL_DIR}/loops.pml && \
+	${SPIN} -a ${EXAMPLE_MODEL_DIR}/loops.pml && \
 	${CC} -DNP -DNOREDUCE -o ${PAN} pan.c && \
 	./${PAN} -l > loops.output
 	grep -q "State-vector 20 byte, depth reached 23, errors: 0" ${TEST_DIR}/loops.output
@@ -122,7 +129,7 @@ test_partial_order_reduction_disabled:
 	echo "Test 6: check partial order reduction algorithm -- first disable it"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -a ${MODEL_DIR}/leader0.pml && \
+	${SPIN} -a ${EXAMPLE_MODEL_DIR}/leader0.pml && \
 	${CC} -DSAFETY -DNOREDUCE -DNOCLAIM -o ${PAN} pan.c && \
 	./${PAN} -c0 -n > leader0.output
 	grep -q "errors: 0" ${TEST_DIR}/leader0.output
@@ -136,7 +143,7 @@ test_partial_order_reduction_enabled:
 	echo "Test 6b: now leave p.o. reduction enabled (i.e., do not disable it)"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -a ${MODEL_DIR}/leader0.pml && \
+	${SPIN} -a ${EXAMPLE_MODEL_DIR}/leader0.pml && \
 	${CC} -DSAFETY -DNOCLAIM -o ${PAN} pan.c && \
 	./${PAN} -c0 -n > leader0.output
 	grep -q "errors: 0" ${TEST_DIR}/leader0.output
@@ -156,7 +163,7 @@ test_rng_files:
 	echo "Test 7: check random number generator"
 	${CREATE_TEST_DIR}
 	cd ${TEST_DIR} && \
-	${SPIN} -o6 -p -g -u10000 ${MODEL_DIR}/priorities.pml \
+	${SPIN} -o6 -p -g -u10000 ${EXAMPLE_MODEL_DIR}/priorities.pml \
 		> priorities.output
 	grep "a\[1\] = " ${TEST_DIR}/priorities.output | tail -1 | sed "s/a\[1\] = //" | xargs \
 		> ${TEST_DIR}/a1.value
@@ -169,14 +176,14 @@ test_rng_files:
 
 # Actual test, checking the generated values
 test_rng: test_rng_files	
-	expr $(shell cat ${TEST_DIR}/a1.value) \> 250 > /dev/null && \
-		expr $(shell cat ${TEST_DIR}/a1.value) \< 350 > /dev/null
-	expr $(shell cat ${TEST_DIR}/a2.value) \> 500 > /dev/null && \
-		expr $(shell cat ${TEST_DIR}/a2.value) \< 700 > /dev/null
-	expr $(shell cat ${TEST_DIR}/a3.value) \> 750 > /dev/null && \
-		expr $(shell cat ${TEST_DIR}/a3.value) \< 1050 > /dev/null
-	expr $(shell cat ${TEST_DIR}/a4.value) \> 1000 > /dev/null && \
-		expr $(shell cat ${TEST_DIR}/a4.value) \< 1400 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a1.value) \> 240 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a1.value) \< 360 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a2.value) \> 490 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a2.value) \<= 710 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a3.value) \> 740 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a3.value) \< 1060 > /dev/null
+	expr $(shell cat ${TEST_DIR}/a4.value) \> 990 > /dev/null && \
+		expr $(shell cat ${TEST_DIR}/a4.value) \< 1410 > /dev/null
 	${DELETE_TEST_DIR}
 
 #Test 8: test the generation of never claims from LTL formulae:
@@ -195,3 +202,70 @@ test_ltl_generation:
 	grep -q ":: (1) -> goto T0_init" ${TEST_DIR}/ltl_generation.output
 	grep -q "od;" ${TEST_DIR}/ltl_generation.output
 	${DELETE_TEST_DIR}
+
+#Test nested typedef
+test_nested_typedef:
+	echo "Test nested typedef"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/NestedTypedef.pml > NestedTypedef.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/NestedTypedef.pml > NestedTypedef.sim.output	
+	grep -q "State-vector 28 byte, depth reached 10, errors: 0" ${TEST_DIR}/NestedTypedef.output	
+	grep -q "11 states, stored" ${TEST_DIR}/NestedTypedef.output	
+	grep -q "0 states, matched" ${TEST_DIR}/NestedTypedef.output	
+	grep -q "11 transitions (= stored+matched)" ${TEST_DIR}/NestedTypedef.output	
+	grep -q "0 atomic steps" ${TEST_DIR}/NestedTypedef.output	
+	grep -q "Data C1 is 100 and 200" ${TEST_DIR}/NestedTypedef.sim.output	
+	grep -q "Data C2 is 10 and 20" ${TEST_DIR}/NestedTypedef.sim.output	
+	${DELETE_TEST_DIR}
+
+#Test typedef used in channel
+test_typedef_for_channel:
+	echo "Test typedef used in channel"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/TypedefForChannel.pml > TypedefForChannel.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForChannel.pml > TypedefForChannel.sim.output	
+	grep -q "State-vector 52 byte, depth reached 10, errors: 0" ${TEST_DIR}/TypedefForChannel.output	
+	grep -q "9 states, stored" ${TEST_DIR}/TypedefForChannel.output	
+	grep -q "0 states, matched" ${TEST_DIR}/TypedefForChannel.output	
+	grep -q "9 transitions (= stored+matched)" ${TEST_DIR}/TypedefForChannel.output	
+	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForChannel.output	
+	grep -q "Data is 1969 and 1337" ${TEST_DIR}/TypedefForChannel.sim.output	
+	grep -q "Data is 10 and 50" ${TEST_DIR}/TypedefForChannel.sim.output	
+	${DELETE_TEST_DIR}
+
+#Test typedef used for global data
+test_typedef_for_global_data:
+	echo "Test typedef used for global data"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/TypedefForGlobalData.pml > TypedefForGlobalData.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForGlobalData.pml > TypedefForGlobalData.sim.output	
+	grep -q "State-vector 20 byte, depth reached 6, errors: 0" ${TEST_DIR}/TypedefForGlobalData.output	
+	grep -q "7 states, stored" ${TEST_DIR}/TypedefForGlobalData.output	
+	grep -q "0 states, matched" ${TEST_DIR}/TypedefForGlobalData.output	
+	grep -q "7 transitions (= stored+matched)" ${TEST_DIR}/TypedefForGlobalData.output	
+	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForGlobalData.output	
+	grep -q "Data is 12 and 17" ${TEST_DIR}/TypedefForGlobalData.sim.output		
+	${DELETE_TEST_DIR}
+
+#Test typedef used for local data
+test_typedef_for_local_data:
+	echo "Test typedef used for local data"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/TypedefForLocalData.pml > TypedefForLocalData.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForLocalData.pml > TypedefForLocalData.sim.output	
+	grep -q "State-vector 20 byte, depth reached 2, errors: 0" ${TEST_DIR}/TypedefForLocalData.output	
+	grep -q "3 states, stored" ${TEST_DIR}/TypedefForLocalData.output	
+	grep -q "0 states, matched" ${TEST_DIR}/TypedefForLocalData.output	
+	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/TypedefForLocalData.output	
+	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForLocalData.output	
+	grep -q "Data is 12 and 17" ${TEST_DIR}/TypedefForLocalData.sim.output		
+	${DELETE_TEST_DIR}
+

@@ -9,5 +9,5 @@ active proctype test() {
     data.b = 17;
     assert(data.a == 12);
     assert(data.b == 17);
-    printf("data is %d and %d\n", data.a, data.b);
+    printf("Data is %d and %d\n", data.a, data.b);
 }
