@@ -21,6 +21,6 @@ active proctype test() {
     assert(g_Data.c1.b == 200);
     assert(g_Data.c2.a == 10);
     assert(g_Data.c2.b == 20);
-    printf("Data C1 is %d and %d\nData C2 is %d and %d\n",
+    printf("Data c1 is %d and %d\nData c2 is %d and %d\n",
         g_Data.c1.a,g_Data.c1.b,g_Data.c2.a,g_Data.c2.b);
 }

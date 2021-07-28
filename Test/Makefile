@@ -28,12 +28,37 @@ TYPEDEF_TESTS= \
 	test_typedef_for_global_data \
 	test_typedef_for_local_data
 
-.SILENT : ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} \
-	test_rng_files
+UNION_TESTS= \
+	test_nested_union \
+	test_union_for_channel \
+	test_union_for_global_data \
+	test_union_for_local_data
 
-.PHONY : check ${EXAMPLE_TESTS} ${TYPEDEF_TESTS}
+.SILENT : ${EXAMPLE_TESTS} \
+	 ${TYPEDEF_TESTS} \
+	 ${UNION_TESTS} \
+	test_rng_files \
+	check_examples \
+	check_unions \
+	check_typedefs
 
-check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS}
+.PHONY : check \
+	check_examples \
+	check_unions \
+	check_typedefs \
+	${EXAMPLE_TESTS} \
+	${TYPEDEF_TESTS} \
+	${UNION_TESTS}
+
+check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} ${UNION_TESTS}
+
+check_examples: ${EXAMPLE_TESTS}
+
+check_unions: ${UNION_TESTS}
+
+check_typedefs: ${TYPEDEF_TESTS}
+
+############################EXAMPLE TESTS######################################
 
 #Test 1: check that you can run a simulation
 test_hello:
@@ -175,7 +200,7 @@ test_rng_files:
 		> ${TEST_DIR}/a4.value
 
 # Actual test, checking the generated values
-test_rng: test_rng_files	
+test_rng: test_rng_files
 	expr $(shell cat ${TEST_DIR}/a1.value) \> 240 > /dev/null && \
 		expr $(shell cat ${TEST_DIR}/a1.value) \< 360 > /dev/null
 	expr $(shell cat ${TEST_DIR}/a2.value) \> 490 > /dev/null && \
@@ -203,6 +228,8 @@ test_ltl_generation:
 	grep -q "od;" ${TEST_DIR}/ltl_generation.output
 	${DELETE_TEST_DIR}
 
+##############################TYPEDEF TESTS####################################
+
 #Test nested typedef
 test_nested_typedef:
 	echo "Test nested typedef"
@@ -210,14 +237,14 @@ test_nested_typedef:
 	cd ${TEST_DIR} && \
 	${SPIN} -run ${USER_TYPES_MODEL_DIR}/NestedTypedef.pml > NestedTypedef.output
 	cd ${TEST_DIR} && \
-	${SPIN} ${USER_TYPES_MODEL_DIR}/NestedTypedef.pml > NestedTypedef.sim.output	
-	grep -q "State-vector 28 byte, depth reached 10, errors: 0" ${TEST_DIR}/NestedTypedef.output	
-	grep -q "11 states, stored" ${TEST_DIR}/NestedTypedef.output	
-	grep -q "0 states, matched" ${TEST_DIR}/NestedTypedef.output	
-	grep -q "11 transitions (= stored+matched)" ${TEST_DIR}/NestedTypedef.output	
-	grep -q "0 atomic steps" ${TEST_DIR}/NestedTypedef.output	
-	grep -q "Data C1 is 100 and 200" ${TEST_DIR}/NestedTypedef.sim.output	
-	grep -q "Data C2 is 10 and 20" ${TEST_DIR}/NestedTypedef.sim.output	
+	${SPIN} ${USER_TYPES_MODEL_DIR}/NestedTypedef.pml > NestedTypedef.sim.output
+	grep -q "State-vector 28 byte, depth reached 10, errors: 0" ${TEST_DIR}/NestedTypedef.output
+	grep -q "11 states, stored" ${TEST_DIR}/NestedTypedef.output
+	grep -q "0 states, matched" ${TEST_DIR}/NestedTypedef.output
+	grep -q "11 transitions (= stored+matched)" ${TEST_DIR}/NestedTypedef.output
+	grep -q "0 atomic steps" ${TEST_DIR}/NestedTypedef.output
+	grep -q "Data c1 is 100 and 200" ${TEST_DIR}/NestedTypedef.sim.output
+	grep -q "Data c2 is 10 and 20" ${TEST_DIR}/NestedTypedef.sim.output
 	${DELETE_TEST_DIR}
 
 #Test typedef used in channel
@@ -227,14 +254,14 @@ test_typedef_for_channel:
 	cd ${TEST_DIR} && \
 	${SPIN} -run ${USER_TYPES_MODEL_DIR}/TypedefForChannel.pml > TypedefForChannel.output
 	cd ${TEST_DIR} && \
-	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForChannel.pml > TypedefForChannel.sim.output	
-	grep -q "State-vector 52 byte, depth reached 10, errors: 0" ${TEST_DIR}/TypedefForChannel.output	
-	grep -q "9 states, stored" ${TEST_DIR}/TypedefForChannel.output	
-	grep -q "0 states, matched" ${TEST_DIR}/TypedefForChannel.output	
-	grep -q "9 transitions (= stored+matched)" ${TEST_DIR}/TypedefForChannel.output	
-	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForChannel.output	
-	grep -q "Data is 1969 and 1337" ${TEST_DIR}/TypedefForChannel.sim.output	
-	grep -q "Data is 10 and 50" ${TEST_DIR}/TypedefForChannel.sim.output	
+	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForChannel.pml > TypedefForChannel.sim.output
+	grep -q "State-vector 52 byte, depth reached 10, errors: 0" ${TEST_DIR}/TypedefForChannel.output
+	grep -q "9 states, stored" ${TEST_DIR}/TypedefForChannel.output
+	grep -q "0 states, matched" ${TEST_DIR}/TypedefForChannel.output
+	grep -q "9 transitions (= stored+matched)" ${TEST_DIR}/TypedefForChannel.output
+	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForChannel.output
+	grep -q "Data is 1969 and 1337" ${TEST_DIR}/TypedefForChannel.sim.output
+	grep -q "Data is 10 and 50" ${TEST_DIR}/TypedefForChannel.sim.output
 	${DELETE_TEST_DIR}
 
 #Test typedef used for global data
@@ -244,13 +271,13 @@ test_typedef_for_global_data:
 	cd ${TEST_DIR} && \
 	${SPIN} -run ${USER_TYPES_MODEL_DIR}/TypedefForGlobalData.pml > TypedefForGlobalData.output
 	cd ${TEST_DIR} && \
-	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForGlobalData.pml > TypedefForGlobalData.sim.output	
-	grep -q "State-vector 20 byte, depth reached 6, errors: 0" ${TEST_DIR}/TypedefForGlobalData.output	
-	grep -q "7 states, stored" ${TEST_DIR}/TypedefForGlobalData.output	
-	grep -q "0 states, matched" ${TEST_DIR}/TypedefForGlobalData.output	
-	grep -q "7 transitions (= stored+matched)" ${TEST_DIR}/TypedefForGlobalData.output	
-	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForGlobalData.output	
-	grep -q "Data is 12 and 17" ${TEST_DIR}/TypedefForGlobalData.sim.output		
+	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForGlobalData.pml > TypedefForGlobalData.sim.output
+	grep -q "State-vector 20 byte, depth reached 6, errors: 0" ${TEST_DIR}/TypedefForGlobalData.output
+	grep -q "7 states, stored" ${TEST_DIR}/TypedefForGlobalData.output
+	grep -q "0 states, matched" ${TEST_DIR}/TypedefForGlobalData.output
+	grep -q "7 transitions (= stored+matched)" ${TEST_DIR}/TypedefForGlobalData.output
+	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForGlobalData.output
+	grep -q "Data is 12 and 17" ${TEST_DIR}/TypedefForGlobalData.sim.output
 	${DELETE_TEST_DIR}
 
 #Test typedef used for local data
@@ -260,12 +287,83 @@ test_typedef_for_local_data:
 	cd ${TEST_DIR} && \
 	${SPIN} -run ${USER_TYPES_MODEL_DIR}/TypedefForLocalData.pml > TypedefForLocalData.output
 	cd ${TEST_DIR} && \
-	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForLocalData.pml > TypedefForLocalData.sim.output	
-	grep -q "State-vector 20 byte, depth reached 2, errors: 0" ${TEST_DIR}/TypedefForLocalData.output	
-	grep -q "3 states, stored" ${TEST_DIR}/TypedefForLocalData.output	
-	grep -q "0 states, matched" ${TEST_DIR}/TypedefForLocalData.output	
-	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/TypedefForLocalData.output	
-	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForLocalData.output	
-	grep -q "Data is 12 and 17" ${TEST_DIR}/TypedefForLocalData.sim.output		
+	${SPIN} ${USER_TYPES_MODEL_DIR}/TypedefForLocalData.pml > TypedefForLocalData.sim.output
+	grep -q "State-vector 20 byte, depth reached 2, errors: 0" ${TEST_DIR}/TypedefForLocalData.output
+	grep -q "3 states, stored" ${TEST_DIR}/TypedefForLocalData.output
+	grep -q "0 states, matched" ${TEST_DIR}/TypedefForLocalData.output
+	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/TypedefForLocalData.output
+	grep -q "0 atomic steps" ${TEST_DIR}/TypedefForLocalData.output
+	grep -q "Data is 12 and 17" ${TEST_DIR}/TypedefForLocalData.sim.output
 	${DELETE_TEST_DIR}
 
+################################UNION TESTS####################################
+
+#Test nested union
+test_nested_union:
+	echo "Test nested union"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/NestedUnion.pml > NestedUnion.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/NestedUnion.pml > NestedUnion.sim.output
+	grep -q "State-vector 20 byte, depth reached 13, errors: 0" ${TEST_DIR}/NestedUnion.output
+	grep -q "14 states, stored" ${TEST_DIR}/NestedUnion.output
+	grep -q "0 states, matched" ${TEST_DIR}/NestedUnion.output
+	grep -q "14 transitions (= stored+matched)" ${TEST_DIR}/NestedUnion.output
+	grep -q "0 atomic steps" ${TEST_DIR}/NestedUnion.output
+	grep -q "Data c1 a is 100" ${TEST_DIR}/NestedUnion.sim.output
+	grep -q "Data c1 b is 200" ${TEST_DIR}/NestedUnion.sim.output
+	grep -q "Data c2 a is 10" ${TEST_DIR}/NestedUnion.sim.output
+	grep -q "Data c2 b is 20" ${TEST_DIR}/NestedUnion.sim.output
+	${DELETE_TEST_DIR}
+
+#Test union used in channel
+test_union_for_channel:
+	echo "Test union used in channel"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/UnionForChannel.pml > UnionForChannel.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/UnionForChannel.pml > UnionForChannel.sim.output
+	grep -q "State-vector 40 byte, depth reached 10, errors: 0" ${TEST_DIR}/UnionForChannel.output
+	grep -q "9 states, stored" ${TEST_DIR}/UnionForChannel.output
+	grep -q "0 states, matched" ${TEST_DIR}/UnionForChannel.output
+	grep -q "9 transitions (= stored+matched)" ${TEST_DIR}/UnionForChannel.output
+	grep -q "0 atomic steps" ${TEST_DIR}/UnionForChannel.output
+	grep -q "Data is 1969" ${TEST_DIR}/UnionForChannel.sim.output
+	grep -q "Data is 1337" ${TEST_DIR}/UnionForChannel.sim.output
+	${DELETE_TEST_DIR}
+
+#Test union used for global data
+test_union_for_global_data:
+	echo "Test union used for global data"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/UnionForGlobalData.pml > UnionForGlobalData.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/UnionForGlobalData.pml > UnionForGlobalData.sim.output
+	grep -q "State-vector 20 byte, depth reached 7, errors: 0" ${TEST_DIR}/UnionForGlobalData.output
+	grep -q "8 states, stored" ${TEST_DIR}/UnionForGlobalData.output
+	grep -q "0 states, matched" ${TEST_DIR}/UnionForGlobalData.output
+	grep -q "8 transitions (= stored+matched)" ${TEST_DIR}/UnionForGlobalData.output
+	grep -q "0 atomic steps" ${TEST_DIR}/UnionForGlobalData.output
+	grep -q "Data is 12" ${TEST_DIR}/UnionForGlobalData.sim.output
+	grep -q "Data is 17" ${TEST_DIR}/UnionForGlobalData.sim.output
+	${DELETE_TEST_DIR}
+
+#Test union used for local data
+test_union_for_local_data:
+	echo "Test union used for local data"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${USER_TYPES_MODEL_DIR}/UnionForLocalData.pml > UnionForLocalData.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${USER_TYPES_MODEL_DIR}/UnionForLocalData.pml > UnionForLocalData.sim.output
+	grep -q "State-vector 16 byte, depth reached 2, errors: 0" ${TEST_DIR}/UnionForLocalData.output
+	grep -q "3 states, stored" ${TEST_DIR}/UnionForLocalData.output
+	grep -q "0 states, matched" ${TEST_DIR}/UnionForLocalData.output
+	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/UnionForLocalData.output
+	grep -q "0 atomic steps" ${TEST_DIR}/UnionForLocalData.output
+	grep -q "Data is 12" ${TEST_DIR}/UnionForLocalData.sim.output
+	grep -q "Data is 17" ${TEST_DIR}/UnionForLocalData.sim.output
+	${DELETE_TEST_DIR}
