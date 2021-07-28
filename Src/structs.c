@@ -65,6 +65,9 @@ putUname(FILE *fd, UType *tmp)
 		case UNION:
 			type_string = "union";
 		break;
+		default:
+			/* This codebase does not know "bool" type */
+			assert(0 && "Incorrect typedef kind");
 	}
 	fprintf(fd, "%s %s { /* user defined type */\n",
 		type_string,
