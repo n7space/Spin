@@ -8,6 +8,7 @@
 
 %{
 #include "spin.h"
+#include "utils.h"
 #include <sys/types.h>
 #ifndef PC
 #include <unistd.h>
@@ -267,7 +268,7 @@ TYPEDEF UNION NAME '{' 	{  if (context)
 				   owner = $3->sym;
 				   in_seq = $1->ln;
 				}
-	  decl_lst '}'		{ setuname($6, UNION);
+	  decl_lst '}'		{ setuname($6, UNION_STRUCT);
 				  owner = ZS;
 				  in_seq = 0;
 				}
@@ -558,13 +559,13 @@ pfld	: NAME			{ $$ = nn($1, NAME, ZN, ZN);
 	;
 
 cmpnd	: pfld			{ Embedded++;
-				  if (($1->sym->type == STRUCT) || ($1->sym->type == UNION))
+				  if (is_typedef($1->sym->type))
 					owner = $1->sym->Snm;
 				}
 	  sfld			{ $$ = $1; $$->rgt = $3;
 	  			  /* TODO STRUCT UNION - analyze the consequences of this*/
 	  			  /* Github issue: https://github.com/n7space/Spin/issues/2*/
-				  if ($3 && $1->sym->type != STRUCT && $1->sym->type != UNION)
+				  if ($3 && !is_typedef($1->sym->type))
 				  {
 					printf("WARNING: Assigning STRUCT by default to %s\n", $1->sym->name);
 					$1->sym->type = STRUCT;

@@ -248,6 +248,7 @@ typedef	Lextok *Lexptr;
 #define INT	 32		/* ditto */
 #define	CHAN	 64		/* not */
 #define STRUCT	128		/* user defined structure name */
+#define UNION_STRUCT	256	/* user defined union name*/
 
 #define SOMETHINGBIG	65536
 #define RATHERSMALL	512

@@ -13,6 +13,7 @@
 #include "pangen4.h"
 #include "pangen5.h"
 #include "pangen7.h"
+#include "utils.h"
 
 #define DELTA	500	/* sets an upperbound on nr of chan names */
 
@@ -942,7 +943,7 @@ genconditionals(void)
 		{	if (last == s->Nid) continue;	/* chan array */
 			last = s->Nid;
 			Docase(s, j, last);
-		} else if (s->type == STRUCT || s->type == UNION)
+		} else if (is_typedef(s->type))
 		{	/* struct may contain a chan */
 			char pregat[128];
 			strcpy(pregat, "");
@@ -1098,7 +1099,7 @@ static int
 getNid(Lextok *n)
 {
 	if (n->sym
-	&&  (n->sym->type == STRUCT || n->sym->type == UNION)
+	&&  is_typedef(n->sym->type)
 	&&  n->rgt && n->rgt->lft)
 		return getNid(n->rgt->lft);
 
@@ -1440,7 +1441,7 @@ nr_bup(Element *e)
 
 	switch (e->n->ntyp) {
 	case ASGN:
-		if (check_track(e->n) == STRUCT || check_track(e->n) == UNION) { break; }
+		if (is_typedef(check_track(e->n))) { break; }
 		nr++;
 		break;
 	case  'r':
@@ -2915,8 +2916,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 				{	if (v->lft->ntyp != CONST
 					&&  v->lft->ntyp != EVAL
 					&&  v->lft->sym
-					&&  v->lft->sym->type != STRUCT	/* not a struct */
-					&&  v->lft->sym->type != UNION	/* not a union */
+					&&  !is_typedef(v->lft->sym->type)
 					&&  (v->lft->sym->nel == 1 && v->lft->sym->isarray == 0) /* not array */
 					&&  strcmp(v->lft->sym->name, "_") != 0)
 					for (w = v->rgt; w; w = w->rgt)
@@ -3138,7 +3138,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		break;
 
 	case ASGN:
-		if (check_track(now) == STRUCT || check_track(now) == UNION) { break; }
+		if (is_typedef(check_track(now))) { break; }
 
 		if (has_enabled || has_priority)
 		fprintf(fd, "if (TstOnly) return 1; /* T3 */\n\t\t");
@@ -3451,7 +3451,7 @@ putname(FILE *fd, char *pre, Lextok *n, int m, char *suff) /* varref */
 		{	fatal("ref to scalar '%s' using array index", (char *) ptr);
 	}	}
 
-	if ((s->type == STRUCT || s->type == UNION) && n->rgt && n->rgt->lft)
+	if (is_typedef(s->type) && n->rgt && n->rgt->lft)
 	{	putname(fd, ".", n->rgt->lft, m, "");
 	}
 shortcut:

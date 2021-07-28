@@ -10,6 +10,7 @@
 #include <assert.h>
 #include "spin.h"
 #include "y.tab.h"
+#include "utils.h"
 
 #ifndef MAXQ
 #define MAXQ	2500		/* default max # queues  */
@@ -88,7 +89,7 @@ qmake(Symbol *s)
 	q->stepnr    = (int *) emalloc(i*sizeof(int));
 
 	for (m = s->ini->rgt, i = 0; m; m = m->rgt)
-	{	if (m->sym && (m->ntyp == STRUCT || m->ntyp == UNION))
+	{	if (m->sym && is_typedef(m->ntyp))
 		{	i = Width_set(q->fld_width, i, getuname(m->sym));
 		} else
 		{	if (m->sym)
@@ -543,7 +544,7 @@ channm(Lextok *n)
 		strcat(GBuf, n->sym->name);
 	else if (n->sym->type == NAME)
 		strcat(GBuf, lookup(n->sym->name)->name);
-	else if (n->sym->type == STRUCT || n->sym->type == UNION)
+	else if (is_typedef(n->sym->type))
 	{	Symbol *r = n->sym;
 		if (r->context)
 		{	r = findloc(r);
@@ -780,8 +781,7 @@ nochan_manip(Lextok *p, Lextok *n, int d)	/* p=lhs n=rhs */
 	if (!n
 	||  !p
 	||  !p->sym
-	||   p->sym->type == STRUCT
-	||   p->sym->type == UNION)
+	||  is_typedef(p->sym->type))
 	{	/* if a struct, assignments to structure fields arent checked yet */
 		return;
 	}

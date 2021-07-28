@@ -8,6 +8,7 @@
 
 #include "spin.h"
 #include "y.tab.h"
+#include "utils.h"
 
 typedef struct BuildStack {
 	FSM_trans *t;
@@ -374,8 +375,7 @@ FSM_ANA(void)
 	for (u = t->Val[n]; u; u = u->nxt)
 	{	if (!u->var->context	/* global */
 		||   u->var->type == CHAN
-		||   u->var->type == STRUCT
-		||   u->var->type == UNION)
+		||   is_typedef(u->var->type))
 			continue;
 		new_dfs();
 		if (FSM_DFS(t->to, u))	/* cannot hit read before hitting write */
@@ -563,7 +563,7 @@ ana_var(FSM_trans *t, Lextok *now, int usage)
 	} else
 		 ana_stmnt(t, now->lft, RVAL);	/* index */
 
-	if ((now->sym->type == STRUCT || now->sym->type == UNION)
+	if (is_typedef(now->sym->type)
 	&&  now->rgt
 	&&  now->rgt->lft)
 		ana_var(t, now->rgt->lft, usage);
@@ -644,7 +644,7 @@ ana_stmnt(FSM_trans *t, Lextok *now, int usage)
 		break;
 
 	case ASGN:
-		if (check_track(now) == STRUCT || check_track(now) == UNION) { break; }
+		if (is_typedef(check_track(now))) { break; }
 
 		ana_stmnt(t, now->lft, LVAL);
 		if (now->rgt->ntyp)

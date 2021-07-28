@@ -7,6 +7,7 @@
  */
 
 #include "spin.h"
+#include "utils.h"
 #include "y.tab.h"
 
 extern Symbol	*Fname, *owner;
@@ -337,7 +338,7 @@ setallxu(Lextok *n, int t)
 
 	for (fp = n; fp; fp = fp->rgt)
 	for (tl = fp->lft; tl; tl = tl->rgt)
-	{	if (tl->sym->type == STRUCT || tl->sym->type == UNION)
+	{	if (is_typedef(tl->sym->type))
 			setallxu(tl->sym->Slst, t);
 		else if (tl->sym->type == CHAN)
 			setonexu(tl->sym, t);
@@ -372,7 +373,7 @@ setxus(Lextok *p, int t)
 		Xu_List = Xu_new;
 
 		n = m->lft;
-		if (n->sym->type == STRUCT || n->sym->type == UNION)
+		if (is_typedef(n->sym->type))
 			setallxu(n->sym->Slst, t);
 		else if (n->sym->type == CHAN)
 			setonexu(n->sym, t);
@@ -496,7 +497,7 @@ sputtype(char *foo, int m)
 	case INT:	strcpy(foo, "int   "); break;
 	case MTYPE:	strcpy(foo, "mtype "); break;
 	case STRUCT:	strcpy(foo, "struct"); break;
-	case UNION:	strcpy(foo, "union"); break;
+	case UNION_STRUCT:	strcpy(foo, "union"); break;
 	case PROCTYPE:	strcpy(foo, "proctype"); break;
 	case LABEL:	strcpy(foo, "label "); return 0;
 	default:	strcpy(foo, "value "); return 0;
@@ -530,7 +531,7 @@ symvar(Symbol *sp)
 
 	if (sp->type == CHAN)
 		printf("\t%d", (sp->ini)?sp->ini->val:0);
-	else if ((sp->type == STRUCT || sp->type == UNION) && sp->Snm != NULL) /* Frank Weil, 2.9.8 */
+	else if (is_typedef(sp->type) && sp->Snm != NULL) /* Frank Weil, 2.9.8 */
 		printf("\t%s", sp->Snm->name);
 	else
 		printf("\t%d", eval(sp->ini));
@@ -560,7 +561,7 @@ symvar(Symbol *sp)
 		for (m = sp->ini->rgt; m; m = m->rgt)
 		{	if (m->ntyp == STRUCT)
 				printf("struct %s", m->sym->name);
-			else if (m->ntyp == UNION)
+			else if (m->ntyp == UNION_STRUCT)
 				printf("union %s", m->sym->name);
 			else
 				(void) puttype(m->ntyp);

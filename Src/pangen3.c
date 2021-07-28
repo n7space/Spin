@@ -8,6 +8,7 @@
 
 #include "spin.h"
 #include "y.tab.h"
+#include "utils.h"
 #include <assert.h>
 
 extern FILE	*fd_th, *fd_tc;
@@ -439,7 +440,7 @@ comwork(FILE *fd, Lextok *now, int m)
 			break;	
 
 	case ASGN:
-			if (check_track(now) == STRUCT || check_track(now) == UNION) { break; }
+			if (is_typedef(check_track(now))) { break; }
 			comwork(fd,now->lft,m);
 			fprintf(fd," = ");
 			comwork(fd,now->rgt,m);

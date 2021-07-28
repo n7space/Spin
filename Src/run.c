@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include "spin.h"
+#include "utils.h"
 #include "y.tab.h"
 
 extern RunList	*X_lst, *run_lst;
@@ -284,7 +285,7 @@ eval_sub(Element *e)
 			}
 			switch (e->n->ntyp) {
 			case ASGN:
-				if (check_track(e->n) == STRUCT || check_track(e->n) == UNION) { break; }
+				if (is_typedef(check_track(e->n))) { break; }
 				/* else fall thru */
 			case TIMEOUT: case RUN:
 			case PRINT: case PRINTM:
@@ -442,7 +443,7 @@ eval(Lextok *now)
 	case PRINT: return TstOnly?1:interprint(stdout, now);
 	case PRINTM: return TstOnly?1:printm(stdout, now);
 	case  ASGN:
-		if (check_track(now) == STRUCT || check_track(now) == UNION) { return 1; }
+		if (is_typedef(check_track(now))) { return 1; }
 		return assign(now);
 
 	case C_CODE: if (!analyze)

@@ -8,6 +8,7 @@
 
 #include "spin.h"
 #include "y.tab.h"
+#include "utils.h"
 
 extern Symbol	*Fname;
 extern int	nr_errs, lineno, verbose, in_for, old_scope_rules, s_trail;
@@ -871,7 +872,7 @@ dump_lex(Lextok *t, char *s)
 	explain(t->ntyp);
 	if (t->ntyp == NAME) printf(" %s ", t->sym->name);
 	if (t->ntyp == CONST) printf(" %d ", t->val);
-	if (t->ntyp == STRUCT || t->ntyp == UNION)
+	if (is_typedef(t->ntyp))
 	{	dump_sym(t->sym, "\n:Z:");
 	}
 	if (t->lft)
@@ -899,7 +900,7 @@ dump_sym(Symbol *z, char *s)
 			fatal("chan %s in for should have only one field (a typedef)", z->name);
 			printf(" -- %s %p -- ", z->ini->rgt->sym->name, z->ini->rgt->sym);
 		}
-	} else if (z->type == STRUCT || z->type == UNION)
+	} else if (is_typedef(z->type))
 	{	if (z->Snm)
 			printf(" == %s %p == ", z->Snm->name, z->Snm);
 		else
@@ -940,8 +941,7 @@ valid_name(Lextok *a3, Lextok *a5, Lextok *a8, char *tp)
 	{	fatal("%s ( .name : from .. to ) { ... }", tp);
 	}
 	if (a3->sym->type == CHAN
-	||  a3->sym->type == STRUCT
-	||  a3->sym->type == UNION
+	||  is_typedef(a3->sym->type)
 	||  a3->sym->isarray != 0)
 	{	fatal("bad index in for-construct %s", a3->sym->name);
 	}
@@ -976,7 +976,7 @@ for_index(Lextok *a3, Lextok *a5)
 	{	fatal("for ( %s in .name ) { ... }", a3->sym->name);
 	}
 
-	if (a3->sym->type == STRUCT || a3->sym->type == UNION)
+	if (is_typedef(a3->sym->type))
 	{	if (a5->sym->type != CHAN)
 		{	fatal("for ( %s in .channel_name ) { ... }",
 				a3->sym->name);
@@ -984,7 +984,7 @@ for_index(Lextok *a3, Lextok *a5)
 		z0 = a5->sym->ini;
 		if (!z0
 		|| z0->val <= 0
-		|| (z0->rgt->ntyp != STRUCT && z0->rgt->ntyp != UNION)
+		|| (!is_typedef(z0->rgt->ntyp))
 		|| z0->rgt->rgt != NULL)
 		{	fatal("bad channel type %s in for", a5->sym->name);
 		}
@@ -1020,7 +1020,7 @@ for_index(Lextok *a3, Lextok *a5)
 		return z3;
 	} else
 	{	Lextok *leaf = a5;
-		if (leaf->sym->type == STRUCT || leaf->sym->type == UNION)	// find leaf node, which should be an array
+		if (is_typedef(leaf->sym->type))	// find leaf node, which should be an array
 		{	while (leaf->rgt
 			&&     leaf->rgt->ntyp == '.')
 			{	leaf = leaf->rgt;

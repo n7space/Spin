@@ -7,6 +7,7 @@
  */
 
 #include "spin.h"
+#include "utils.h"
 #include "y.tab.h"
 
 extern char	GBuf[];
@@ -162,7 +163,7 @@ getglobal(Lextok *sn)
 	{	printf("findlab through getglobal on %s\n", s->name);
 		return i;	/* can this happen? */
 	}
-	if (s->type == STRUCT || s->type == UNION)
+	if (is_typedef(s->type))
 	{	return Rval_struct(sn, s, 1); /* 1 = check init */
 	}
 	if (checkvar(s, n))
@@ -196,7 +197,7 @@ cast_val(int t, int v, int w)
 static int
 setglobal(Lextok *v, int m)
 {
-	if (v->sym->type == STRUCT || v->sym->type == UNION)
+	if (is_typedef(v->sym->type))
 	{	(void) Lval_struct(v, v->sym, 1, m);
 	} else
 	{	int n = eval(v->lft);
@@ -257,7 +258,7 @@ dumpglobals(void)
 		||  (sp->type == MTYPE && ismtype(sp->name)))
 			continue;
 
-		if (sp->type == STRUCT || sp->type == UNION)
+		if (is_typedef(sp->type))
 		{	if ((verbose&4) && !(verbose&64)
 			&&  (sp->setat < depth
 			&&   jumpsteps != depth))
@@ -340,7 +341,7 @@ dumplocal(RunList *r, int final)
 	}
 
 	for (z = s; z; z = z->next)
-	{	if (z->type == STRUCT || z->type == UNION)
+	{	if (is_typedef(z->type))
 		{	dump_struct(z, z->name, r);
 			continue;
 		}
