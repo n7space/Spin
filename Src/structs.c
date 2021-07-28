@@ -7,6 +7,7 @@
  */
 
 #include "spin.h"
+#include <assert.h>
 #include "y.tab.h"
 
 typedef struct UType {
@@ -31,7 +32,7 @@ extern void	Done_case(char *, Symbol *);
 void
 setuname(Lextok *n, unsigned short type)
 {	UType *tmp;
-
+	assert((type == STRUCT) || (type == UNION));
 	if (!owner)
 		fatal("illegal reference inside typedef", (char *) 0);
 
@@ -147,10 +148,10 @@ setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 				n->sym->hidden |= 64;
 		}
 
-		n->sym->type = type;/* classification   */
-		n->sym->Slst = m;	/* structure itself */
-		n->sym->Snm  = t;	/* name of typedef  */
-		n->sym->Nid  = 0;	/* this is no chan  */
+		n->sym->type = type; /* classification   */
+		n->sym->Slst = m;	 /* structure itself */
+		n->sym->Snm  = t;	 /* name of typedef  */
+		n->sym->Nid  = 0;	 /* this is no chan  */
 		n->sym->hidden |= 4;
 		if (n->sym->nel <= 0)
 		non_fatal("bad array size for '%s'", n->sym->name);

@@ -74,7 +74,7 @@ static	int  Embedded = 0, inEventMap = 0, has_ini = 0;
 %token	CONST TYPE XU			/* val */
 %token	NAME UNAME PNAME INAME		/* sym */
 %token	STRING CLAIM TRACE INIT	LTL	/* sym */
-%token  UNION
+%token	UNION
 
 %right	ASGN
 %left	SND O_SND RCV R_RCV /* SND doubles as boolean negation */
@@ -563,6 +563,7 @@ cmpnd	: pfld			{ Embedded++;
 				}
 	  sfld			{ $$ = $1; $$->rgt = $3;
 	  			  /* TODO STRUCT UNION - analyze the consequences of this*/
+	  			  /* Github issue: https://github.com/n7space/Spin/issues/2*/
 				  if ($3 && $1->sym->type != STRUCT && $1->sym->type != UNION)
 				  {
 					printf("WARNING: Assigning STRUCT by default to %s\n", $1->sym->name);

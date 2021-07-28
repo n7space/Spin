@@ -39,7 +39,7 @@ extern void	c_stack_size(FILE *);
 static Symbol	*LstSet=ZS;
 static int	acceptors=0, progressors=0, nBits=0;
 static int	Types[] = { UNSIGNED, BIT, BYTE, CHAN, MTYPE, SHORT, INT, STRUCT, UNION };
-static int  Types_Count = sizeof(Types)/sizeof(int);
+static const int  Types_Count = sizeof(Types)/sizeof(int);
 
 static int	doglobal(char *, int);
 static void	dohidden(void);
