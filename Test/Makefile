@@ -34,29 +34,48 @@ UNION_TESTS= \
 	test_union_for_global_data \
 	test_union_for_local_data
 
+COMPLEX_TESTS = \
+	test_message
+
+BENCHMARK = \
+	benchmark_large_message
+
 .SILENT : ${EXAMPLE_TESTS} \
-	 ${TYPEDEF_TESTS} \
-	 ${UNION_TESTS} \
+	${TYPEDEF_TESTS} \
+	${UNION_TESTS} \
+	${COMPLEX_TESTS} \
+	${BENCHMARK} \
 	test_rng_files \
 	check_examples \
 	check_unions \
-	check_typedefs
+	check_typedefs \
+	check_complex \
+	benchmark
 
-.PHONY : check \
+.PHONY : ${EXAMPLE_TESTS} \
+	${TYPEDEF_TESTS} \
+	${UNION_TESTS} \
+	${COMPLEX_TESTS} \
+	${BENCHMARK} \
+	test_rng_files \
 	check_examples \
 	check_unions \
 	check_typedefs \
-	${EXAMPLE_TESTS} \
-	${TYPEDEF_TESTS} \
-	${UNION_TESTS}
+	check_complex \
+	benchmark \
+	check
 
-check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} ${UNION_TESTS}
+check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} ${UNION_TESTS} ${COMPLEX_TESTS}
 
 check_examples: ${EXAMPLE_TESTS}
 
 check_unions: ${UNION_TESTS}
 
 check_typedefs: ${TYPEDEF_TESTS}
+
+check_complex: ${COMPLEX_TESTS}
+
+benchmark: ${BENCHMARK}
 
 ############################EXAMPLE TESTS######################################
 
@@ -367,3 +386,42 @@ test_union_for_local_data:
 	grep -q "Data is 12" ${TEST_DIR}/UnionForLocalData.sim.output
 	grep -q "Data is 17" ${TEST_DIR}/UnionForLocalData.sim.output
 	${DELETE_TEST_DIR}
+
+###############################COMPLEX DATA TYPES##############################
+
+#Test complex message type which mixes typedefs and unions
+#Messages are passed through channels and processed
+#An assert violation is expected to be found
+test_message:
+	echo "Test complex message type which mixes typedefs and unions"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run -E -bfs ${USER_TYPES_MODEL_DIR}/Message.pml > Message.output	
+	grep -q "pan:1: assertion violated (msgIn.payload.readNotif.status==5) (at depth 8)" ${TEST_DIR}/Message.output
+	grep -q "State-vector 596 byte, depth reached 8, errors: 1" ${TEST_DIR}/Message.output
+	grep -q "3048 states, stored" ${TEST_DIR}/Message.output
+	grep -q "172 states, matched" ${TEST_DIR}/Message.output
+	grep -q "3220 transitions (= stored+matched)" ${TEST_DIR}/Message.output
+	grep -q "0 atomic steps" ${TEST_DIR}/Message.output
+	${DELETE_TEST_DIR}
+
+################################BENCHMARK######################################
+#Benchmark large message 
+#[THIS TEST IS NOT TO BE RUN ON CI AS NOT TO USE UP VALUABLE RESOURCES]
+#The message is similar to the one in test_message, but arfificially bloated
+#to increase memory consumption
+#Messages are passed through channels and processed
+#An assert violation is expected to be found
+benchmark_large_message:
+	echo "Benchmark large message"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run -E -bfs ${USER_TYPES_MODEL_DIR}/LargeMessage.pml > LargeMessage.output	
+	grep -q "pan:1: assertion violated (msgIn.payload.readNotif.status==5) (at depth 25)" ${TEST_DIR}/LargeMessage.output
+	grep -q "State-vector 832 byte, depth reached 25, errors: 1" ${TEST_DIR}/LargeMessage.output
+	grep -q "4742086 states, stored" ${TEST_DIR}/LargeMessage.output
+	grep -q "1519620 states, matched" ${TEST_DIR}/LargeMessage.output
+	grep -q "6261706 transitions (= stored+matched)" ${TEST_DIR}/LargeMessage.output
+	grep -q "0 atomic steps" ${TEST_DIR}/LargeMessage.output
+	${DELETE_TEST_DIR}
+
