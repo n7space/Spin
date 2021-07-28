@@ -58,7 +58,7 @@ putUname(FILE *fd, UType *tmp)
 
 	if (!tmp) return;
 	putUname(fd, tmp->nxt); /* postorder */
-	char* type_string;
+	const char* type_string;
 	switch (tmp->type) {
 		case STRUCT:
 			type_string = "struct";
