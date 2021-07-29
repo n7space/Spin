@@ -11,6 +11,6 @@ active proctype test() {
     rsub = a - b;
     rmul = a * b;
     rdiv = a / b;
-    printf("Float arithmetic: %.2f and %.2f == (+)%.2f (-)%.2f (*)%.2f (/)%.2f",
-        radd, rsub, rmul, rdiv);
+    printf("Float arithmetic: %f and %f == (+)%f (-)%f (*)%f (/)%f\n",
+        a, b, radd, rsub, rmul, rdiv);
 }

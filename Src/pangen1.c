@@ -702,6 +702,21 @@ c_var(FILE *fd, char *pref, Symbol *sp)
 		c_struct(fd, buf, sp);
 		break;		
 	case FLOAT:		
+		sputtype(buf, sp->type);
+		if (sp->nel == 1 && sp->isarray == 0)
+		{
+			fprintf(fd, "\tprintf(\"\t%s %s:\t%%f\\n\", %s%s);\n",
+				buf, ptr, pref, sp->name);
+		} else
+		{	fprintf(fd, "\t{\tint l_in;\n");
+			fprintf(fd, "\t\tfor (l_in = 0; l_in < %d; l_in++)\n", sp->nel);
+			fprintf(fd, "\t\t{\n");
+			fprintf(fd, "\t\t\tprintf(\"\t%s %s[%%f]:\t%%d\\n\", l_in, %s%s[l_in]);\n",
+						buf, ptr, pref, sp->name);
+			fprintf(fd, "\t\t}\n");
+			fprintf(fd, "\t}\n");
+		}
+		break;	
 	case MTYPE:
 	case BIT:   case BYTE:
 	case SHORT: case INT:

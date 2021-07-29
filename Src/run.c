@@ -565,6 +565,7 @@ interprint(FILE *fd, Lextok *n)
 			 case 'o': sprintf(lbuf, "%o", j); break;
 			 case 'u': sprintf(lbuf, "%u", (unsigned) j); break;
 			 case 'x': sprintf(lbuf, "%x", j); break;
+			 case 'f': sprintf(lbuf, "%f", (float)j); break;
 			 default:  non_fatal("bad print cmd: '%s'", &s[i-1]);
 				   lbuf[0] = '\0'; break;
 			 }
