@@ -665,7 +665,9 @@ int
 interprint(FILE *fd, Lextok *n)
 {	Lextok *tmp = n->lft;
 	char c, *s = n->sym->name, *t = 0;
-	int i, j; char lbuf[512]; /* matches value in sr_buf() */
+	int i;
+	char lbuf[512]; /* matches value in sr_buf() */
+	Value j;
 	extern char GBuf[];	/* global, size 4096 */
 	char tBuf[4096];	/* match size of global GBuf[] */
 
@@ -691,7 +693,7 @@ interprint(FILE *fd, Lextok *n)
 			 {	non_fatal("too few print args %s", s);
 				break;
 			 }
-			 j = eval(tmp->lft);
+			 j = evalValue(tmp->lft);
 
 			 if (c == 'e'
 			 &&  tmp->lft
@@ -702,22 +704,22 @@ interprint(FILE *fd, Lextok *n)
 
 			 tmp = tmp->rgt;
 			 switch(c) {
-			 case 'c': sprintf(lbuf, "%c", j); break;
-			 case 'd': sprintf(lbuf, "%d", j); break;
+			 case 'c': sprintf(lbuf, "%c", getInt(j)); break;
+			 case 'd': sprintf(lbuf, "%d", getInt(j)); break;
 
 			 case 'e': strcpy(tBuf, GBuf);	/* event name */
 				   GBuf[0] = '\0';
 
-				   sr_buf(j, 1, t);
+				   sr_buf(getInt(j), 1, t);
 
 				   strcpy(lbuf, GBuf);
 				   strcpy(GBuf, tBuf);
 				   break;
 
-			 case 'o': sprintf(lbuf, "%o", j); break;
-			 case 'u': sprintf(lbuf, "%u", (unsigned) j); break;
-			 case 'x': sprintf(lbuf, "%x", j); break;
-			 case 'f': sprintf(lbuf, "%f", (float)j); break;
+			 case 'o': sprintf(lbuf, "%o", getInt(j)); break;
+			 case 'u': sprintf(lbuf, "%u", (unsigned) getInt(j)); break;
+			 case 'x': sprintf(lbuf, "%x", getInt(j)); break;
+			 case 'f': sprintf(lbuf, "%f", getFloat(j)); break;
 			 default:  non_fatal("bad print cmd: '%s'", &s[i-1]);
 				   lbuf[0] = '\0'; break;
 			 }
