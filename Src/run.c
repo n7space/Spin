@@ -7,6 +7,7 @@
  */
 
 #include <stdlib.h>
+#include <assert.h>
 #include "spin.h"
 #include "utils.h"
 #include "y.tab.h"
@@ -357,11 +358,20 @@ nonprogress(void)	/* np_ */
 	return 1;
 }
 
-int
-eval(Lextok *now)
-{	int temp;
+static inline Value intResult(int value) {
+	Value result;
+	result.kind = VALUE_INT;
+	result.value.intValue = value;
+	return result;
+}
 
-	if (now) {
+Value
+evalInternal(Lextok *now)
+{
+	int temp;
+	if (!now) {
+		return intResult(0);
+	}
 	lineno = now->ln;
 	Fname  = now->fn;
 #ifdef DEBUG
@@ -370,116 +380,163 @@ eval(Lextok *now)
 	printf("\n");
 #endif
 	switch (now->ntyp) {
-	case CONST: return now->val;
-	case   '!': return !eval(now->lft);
-	case  UMIN: return -eval(now->lft);
-	case   '~': return ~eval(now->lft);
+	case CONST: return intResult(now->val);
+	case   '!': return intResult(!eval(now->lft));
+	case  UMIN: return intResult(-eval(now->lft));
+	case   '~': return intResult(~eval(now->lft));
 
 	case   '/': temp = eval(now->rgt);
 		    if (temp == 0)
 		    {	fatal("division by zero", (char *) 0);
 		    }
-		    return (eval(now->lft) / temp);
-	case   '*': return (eval(now->lft) * eval(now->rgt));
-	case   '-': return (eval(now->lft) - eval(now->rgt));
-	case   '+': return (eval(now->lft) + eval(now->rgt));
+		    return intResult(eval(now->lft) / temp);
+	case   '*': return intResult(eval(now->lft) * eval(now->rgt));
+	case   '-': return intResult(eval(now->lft) - eval(now->rgt));
+	case   '+': return intResult(eval(now->lft) + eval(now->rgt));
 	case   '%': temp = eval(now->rgt);
 		    if (temp == 0)
 		    {	fatal("taking modulo of zero", (char *) 0);
 		    }
-		    return (eval(now->lft) % temp);
-	case    LT: return (eval(now->lft) <  eval(now->rgt));
-	case    GT: return (eval(now->lft) >  eval(now->rgt));
-	case   '&': return (eval(now->lft) &  eval(now->rgt));
-	case   '^': return (eval(now->lft) ^  eval(now->rgt));
-	case   '|': return (eval(now->lft) |  eval(now->rgt));
-	case    LE: return (eval(now->lft) <= eval(now->rgt));
-	case    GE: return (eval(now->lft) >= eval(now->rgt));
-	case    NE: return (eval(now->lft) != eval(now->rgt));
-	case    EQ: return (eval(now->lft) == eval(now->rgt));
-	case    OR: return (eval(now->lft) || eval(now->rgt));
-	case   AND: return (eval(now->lft) && eval(now->rgt));
-	case LSHIFT: return (eval(now->lft) << eval(now->rgt));
-	case RSHIFT: return (eval(now->lft) >> eval(now->rgt));
-	case   '?': return (eval(now->lft) ? eval(now->rgt->lft)
-					   : eval(now->rgt->rgt));
-
-	case     'p': return remotevar(now);	/* _p for remote reference */
-	case     'q': return remotelab(now);
-	case     'R': return qrecv(now, 0);	/* test only    */
-	case     LEN: return qlen(now);
-	case    FULL: return (qfull(now));
-	case   EMPTY: return (qlen(now)==0);
-	case   NFULL: return (!qfull(now));
-	case  NEMPTY: return (qlen(now)>0);
-	case ENABLED: if (s_trail) return 1;
-		      return pc_enabled(now->lft);
-
-	case GET_P: return get_priority(now->lft);
-	case SET_P: set_priority(now->lft->lft, now->lft->rgt); return 1;
-
+		    return intResult(eval(now->lft) % temp);
+	case    LT: return intResult(eval(now->lft) <  eval(now->rgt));		
+	case    GT: return intResult(eval(now->lft) >  eval(now->rgt));
+	case   '&': return intResult(eval(now->lft) &  eval(now->rgt));		
+	case   '^': return intResult(eval(now->lft) ^  eval(now->rgt));
+	case   '|': return intResult(eval(now->lft) |  eval(now->rgt));		
+	case    LE: return intResult(eval(now->lft) <= eval(now->rgt));		
+	case    GE: return intResult(eval(now->lft) >= eval(now->rgt));
+	case    NE: return intResult(eval(now->lft) != eval(now->rgt));		
+	case    EQ: return intResult(eval(now->lft) == eval(now->rgt));
+	case    OR: return intResult(eval(now->lft) || eval(now->rgt));
+	case   AND: return intResult(eval(now->lft) && eval(now->rgt));
+	case LSHIFT: return intResult(eval(now->lft) << eval(now->rgt));
+	case RSHIFT: return intResult(eval(now->lft) >> eval(now->rgt));		
+	case   '?': return intResult(eval(now->lft) ? eval(now->rgt->lft)
+					   : eval(now->rgt->rgt));		
+	case     'p': return intResult(remotevar(now));	/* _p for remote reference */		
+	case     'q': return intResult(remotelab(now));
+	case     'R': return intResult(qrecv(now, 0));	/* test only    */		
+	case     LEN: return intResult(qlen(now));
+	case    FULL: return intResult(qfull(now));		
+	case   EMPTY: return intResult(qlen(now)==0);		
+	case   NFULL: return intResult(!qfull(now));		
+	case  NEMPTY: return intResult(qlen(now)>0);
+	case ENABLED: return intResult(s_trail?1:pc_enabled(now->lft));
+	case GET_P: return intResult(get_priority(now->lft));
+	case SET_P: set_priority(now->lft->lft, now->lft->rgt);
+		return intResult(1);		
 	case    EVAL:	if (now->lft->ntyp == ',')
 			{	Lextok *fix = now->lft;
 				do {					/* new */
 					if (eval(fix->lft) == 0)	/* usertype6 */
-					{	return 0;
+					{
+						return intResult(0);
 					}
 					fix = fix->rgt;
 				} while (fix && fix->ntyp == ',');
-				return 1;
+				return intResult(1);
+
 			}
-			return eval(now->lft);
+			return intResult(eval(now->lft));
 
-	case  PC_VAL: return pc_value(now->lft);
-	case NONPROGRESS: return nonprogress();
-	case    NAME: return getval(now);
-
-	case TIMEOUT: return Tval;
-	case     RUN: return TstOnly?1:enable(now);
-
-	case   's': return qsend(now);		/* send         */
-	case   'r': return qrecv(now, 1);	/* receive or poll */
-	case   'c': return eval(now->lft);	/* condition    */
-	case PRINT: return TstOnly?1:interprint(stdout, now);
-	case PRINTM: return TstOnly?1:printm(stdout, now);
+	case  PC_VAL:
+		return intResult(pc_value(now->lft));	 	
+	case NONPROGRESS:
+		return intResult(nonprogress());	 	
+	case    NAME:
+		return intResult(getval(now));	 	
+	case TIMEOUT:
+		return intResult(Tval);  
+	case     RUN:
+		return intResult(TstOnly?1:enable(now));
+	case   's':
+		/* send         */
+		return intResult(qsend(now));	 	
+	case   'r': 
+		/* receive or poll */
+		return intResult(qrecv(now, 1));
+	case   'c': 
+		/* condition    */
+		return intResult(eval(now->lft));
+	case PRINT: 
+		return intResult(TstOnly?1:interprint(stdout, now));		
+	case PRINTM:
+		return intResult(TstOnly?1:printm(stdout, now));				
 	case  ASGN:
-		if (is_typedef(check_track(now))) { return 1; }
-		return assign(now);
+		if (is_typedef(check_track(now)))
+		{
+			return intResult(1);
+		}
+		return intResult(assign(now));
+	case C_CODE:
+		if (!analyze)
+		{	printf("%s:\t", now->sym->name);
+		    plunk_inline(stdout, now->sym->name, 0, 1);
+		}
+		/* uninterpreted */
+		return intResult(1);
 
-	case C_CODE: if (!analyze)
-		     {	printf("%s:\t", now->sym->name);
-		     	plunk_inline(stdout, now->sym->name, 0, 1);
-		     }
-		     return 1; /* uninterpreted */
+	case C_EXPR:
+		if (!analyze)
+		{	printf("%s:\t", now->sym->name);
+		    plunk_expr(stdout, now->sym->name);
+		    printf("\n");
+		}
+		/* uninterpreted */
+		return intResult(1);
 
-	case C_EXPR: if (!analyze)
-		     {	printf("%s:\t", now->sym->name);
-		     	plunk_expr(stdout, now->sym->name);
-		     	printf("\n");
-		     }
-		     return 1; /* uninterpreted */
-
-	case ASSERT: if (TstOnly || eval(now->lft)) return 1;
-		     non_fatal("assertion violated", (char *) 0);
-			printf("spin: text of failed assertion: assert(");
-			comment(stdout, now->lft, 0);
-			printf(")\n");
-		     if (s_trail && !xspin) return 1;
-		     wrapup(1); /* doesn't return */
+	case ASSERT: 
+		if (TstOnly || eval(now->lft)) 
+		{
+			return intResult(1);
+		}
+		non_fatal("assertion violated", (char *) 0);
+		printf("spin: text of failed assertion: assert(");
+		comment(stdout, now->lft, 0);
+		printf(")\n");
+		if (s_trail && !xspin) 
+		{
+			return intResult(1);		
+		}
+		wrapup(1); /* doesn't return */
+		assert(0 && "Wrapup should not return");
 
 	case  IF: case DO: case BREAK: case UNLESS:	/* compound */
-	case   '.': return 1;	/* return label for compound */
-	case   '@': return 0;	/* stop state */
-	case  ELSE: return 1;	/* only hit here in guided trails */
-
+	case   '.': 
+		/* return label for compound */
+		return intResult(1);
+	case   '@':
+		/* stop state */
+		return intResult(0);
+	case  ELSE:
+		/* only hit here in guided trails */
+		return intResult(1);
 	case ',':	/* reached through option -A with array initializer */
 	case 0:
-		    return 0;	/* not great, but safe */
-
+		/* not great, but safe */
+		return intResult(0);		
 	default   : printf("spin: bad node type %d (run)\n", now->ntyp);
-		    if (s_trail) printf("spin: trail file doesn't match spec?\n");
-		    fatal("aborting", 0);
-	}}
+		if (s_trail) printf("spin: trail file doesn't match spec?\n");
+			fatal("aborting", 0);
+	}
+	assert(0 && "Default switch case should guard against getting here");
+	return intResult(0);
+}
+
+int
+eval(Lextok *now)
+{	
+	Value value = evalInternal(now);
+	switch (value.kind) {
+		case VALUE_FLOAT:
+			return (int)value.value.floatValue;
+		break;
+		case VALUE_INT:
+			return value.value.intValue;
+		break;
+		default:
+			return 0;
+	}
 	return 0;
 }
 

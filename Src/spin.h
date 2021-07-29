@@ -82,6 +82,16 @@ typedef struct Symbol {
 	struct Symbol	*next;	/* linked list */
 } Symbol;
 
+typedef enum {VALUE_FLOAT, VALUE_INT} ValueKind;
+
+typedef struct {
+	ValueKind kind;
+	union {
+		int intValue;
+		float floatValue;
+	} value;
+} Value;
+
 typedef struct Ordered {	/* links all names in Symbol table */ 
 	struct Symbol	*entry;
 	struct Ordered	*next;
@@ -310,6 +320,7 @@ int	cnt_mpars(Lextok *);
 int	complete_rendez(void);
 int	enable(Lextok *);
 int	Enabled0(Element *);
+Value	evalInternal(Lextok *);
 int	eval(Lextok *);
 int	find_lab(Symbol *, Symbol *, int);
 int	find_maxel(Symbol *);
