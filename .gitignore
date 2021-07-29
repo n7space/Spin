@@ -1,6 +1,7 @@
 *.o
 *.trail
 pan
+pan.*
 Src/spin
 Src/y.tab.h
 Src/y.output
