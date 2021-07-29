@@ -176,7 +176,7 @@ int
 cast_val(int t, int v, int w)
 {	int i=0; short s=0; unsigned int u=0;
 
-	if (t == PREDEF || t == INT || t == CHAN) i = v;	/* predef means _ */
+	if (t == PREDEF || t == INT || t == CHAN || t == FLOAT) i = v;	/* predef means _ */
 	else if (t == SHORT) s = (short) v;
 	else if (t == BYTE || t == MTYPE)  u = (unsigned char)v;
 	else if (t == BIT)   u = (unsigned char)(v&1);

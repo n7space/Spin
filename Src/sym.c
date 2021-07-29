@@ -494,6 +494,7 @@ sputtype(char *foo, int m)
 	case BYTE:	strcpy(foo, "byte  "); break;
 	case CHAN:	strcpy(foo, "chan  "); break;
 	case SHORT:	strcpy(foo, "short "); break;
+	case FLOAT:	strcpy(foo, "float "); break;
 	case INT:	strcpy(foo, "int   "); break;
 	case MTYPE:	strcpy(foo, "mtype "); break;
 	case STRUCT:	strcpy(foo, "struct"); break;
@@ -662,6 +663,7 @@ chanaccess(void)
 		case BIT:
 		case BYTE:
 		case SHORT:
+		case FLOAT:
 		case INT:
 		case UNSIGNED:
 			if ((walk->entry->hidden&128))	/* was: 32 */

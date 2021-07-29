@@ -1787,6 +1787,7 @@ static struct {
 	{"select",	SELECT,		0,		0},
 	{"set_priority", SET_P,		0,		0},
 	{"short",	TYPE,		SHORT,		0},
+	{"float",	TYPE,		FLOAT,		0},
 	{"skip",	CONST,		1,		0},
 	{"timeout",	TIMEOUT,	0,		0},
 	{"trace",	TRACE,		0,		":trace:"},

@@ -909,6 +909,7 @@ setlocals(RunList *r)
 		||  sp->type == BYTE
 		||  sp->type == CHAN
 		||  sp->type == SHORT
+		||  sp->type == FLOAT
 		||  sp->type == INT
 		||  is_typedef(sp->type)))
 		{	if (!findloc(sp))
