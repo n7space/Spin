@@ -322,6 +322,7 @@ int	enable(Lextok *);
 int	Enabled0(Element *);
 int isValueEqual(const Value a, const int b);
 int areValuesEqual(const Value a, const Value b);
+int isLeftValueLargerOrEqual(const Value a, const Value b);
 int isLeftValueLarger(const Value a, const Value b);
 Value evalValue(Lextok *);
 Value intValue(const int value);	

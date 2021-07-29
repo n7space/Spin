@@ -51,7 +51,7 @@ rev_escape(SeqList *e)
 		{	r = eval_sub(e->this->frst);
 	}	}
 
-	return r;		
+	return r;
 }
 
 Element *
@@ -358,74 +358,103 @@ nonprogress(void)	/* np_ */
 	return 1;
 }
 
-int isLeftValueLarger(const Value a, const Value b) {
+int
+isLeftValueLargerOrEqual(const Value a, const Value b)
+{
+	if ((a.kind == VALUE_INT) && (b.kind == VALUE_INT)) {
+		return a.value.intValue >= b.value.intValue;
+	}
+	return getFloat(a) >= getFloat(b);
+}
+
+int
+isLeftValueLarger(const Value a, const Value b)
+{
 	if ((a.kind == VALUE_INT) && (b.kind == VALUE_INT)) {
 		return a.value.intValue > b.value.intValue;
 	}
 	return getFloat(a) > getFloat(b);
 }
 
-int areValuesEqual(const Value a, const Value b) {
+int
+areValuesEqual(const Value a, const Value b)
+{
 	if (a.kind != b.kind)
 		return 0;
 	if (a.kind == VALUE_INT)
-		return a.value.intValue == b.value.intValue;	
+		return a.value.intValue == b.value.intValue;
 	return a.value.floatValue == b.value.floatValue;
 }
 
-int isValueEqual(const Value a, const int b) {	
+int
+isValueEqual(const Value a, const int b) {
+
 	if (a.kind == VALUE_INT)
-		return a.value.intValue == b;	
+		return a.value.intValue == b;
 	return getInt(a) == b;
 }
 
-Value intValue(const int value) {
+Value
+intValue(const int value)
+{
 	Value result;
 	result.kind = VALUE_INT;
 	result.value.intValue = value;
 	return result;
 }
 
-Value floatValue(const float value) {
+Value
+floatValue(const float value)
+{
 	Value result;
 	result.kind = VALUE_FLOAT;
 	result.value.floatValue = value;
 	return result;
 }
 
-float getFloat(const Value value) {
+float
+getFloat(const Value value)
+{
 	switch (value.kind) {
 		case VALUE_FLOAT:
 			return value.value.floatValue;
 		case VALUE_INT:
-			return (float)value.value.intValue;			
+			return (float)value.value.intValue;
 	}
 	return 0.0f;
 }
 
-int getInt(const Value value) {
+int
+getInt(const Value value)
+{
 	switch (value.kind) {
 		case VALUE_FLOAT:
 			return (int)value.value.floatValue;
 		case VALUE_INT:
-			return value.value.intValue;			
+			return value.value.intValue;
 	}
 	return 0;
 }
 
-static inline int isAnyFloat(const Value a, const Value b) {
+static inline int
+isAnyFloat(const Value a, const Value b)
+{
 	return (a.kind == VALUE_FLOAT || b.kind == VALUE_FLOAT);
 }
 
-static inline Value evalMul(Lextok* left, Lextok* right) {
+static inline Value
+evalMul(Lextok* left, Lextok* right)
+{
 	const Value lvalue = evalValue(left);
 	const Value rvalue = evalValue(right);
 	if (isAnyFloat(lvalue, rvalue))
 		return floatValue(getFloat(lvalue) * getFloat(rvalue));
-	return intValue(getInt(lvalue) * getInt(rvalue));	
+	return intValue(getInt(lvalue) * getInt(rvalue));
 }
 
-static inline Value evalDiv(Lextok* left, Lextok* right) {
+static inline Value
+evalDiv(Lextok* left, Lextok* right)
+{
 	const Value lvalue = evalValue(left);
 	const Value rvalue = evalValue(right);
 	if (isAnyFloat(lvalue, rvalue))
@@ -436,32 +465,36 @@ static inline Value evalDiv(Lextok* left, Lextok* right) {
 			fatal("division by zero", (char *) 0);
 		}
 		return floatValue(getFloat(lvalue) / divisor);
-	}	
-	else 
+	}
+	else
 	{
 		const int divisor = getInt(rvalue);
 		if (divisor == 0)
 		{
 			fatal("division by zero", (char *) 0);
-		}	
-		return intValue(getInt(lvalue) / divisor);	
+		}
+		return intValue(getInt(lvalue) / divisor);
 	}
 }
 
-static inline Value evalAdd(Lextok* left, Lextok* right) {
+static inline Value
+evalAdd(Lextok* left, Lextok* right)
+{
 	const Value lvalue = evalValue(left);
 	const Value rvalue = evalValue(right);
 	if (isAnyFloat(lvalue, rvalue))
 		return floatValue(getFloat(lvalue) + getFloat(rvalue));
-	return intValue(getInt(lvalue) + getInt(rvalue));	
+	return intValue(getInt(lvalue) + getInt(rvalue));
 }
 
-static inline Value evalSub(Lextok* left, Lextok* right) {
+static inline Value
+evalSub(Lextok* left, Lextok* right)
+{
 	const Value lvalue = evalValue(left);
 	const Value rvalue = evalValue(right);
 	if (isAnyFloat(lvalue, rvalue))
 		return floatValue(getFloat(lvalue) - getFloat(rvalue));
-	return intValue(getInt(lvalue) - getInt(rvalue));	
+	return intValue(getInt(lvalue) - getInt(rvalue));
 }
 
 Value
@@ -493,33 +526,37 @@ evalValue(Lextok *now)
 		    {	fatal("taking modulo of zero", (char *) 0);
 		    }
 		    return intValue(eval(now->lft) % temp);
-	case    LT: return intValue(eval(now->lft) <  eval(now->rgt));		
-	case    GT: return intValue(eval(now->lft) >  eval(now->rgt));
-	case   '&': return intValue(eval(now->lft) &  eval(now->rgt));		
+	case    LT: return intValue(
+		!isLeftValueLargerOrEqual(evalValue(now->lft), evalValue(now->rgt)));
+	case    GT: return intValue(
+		isLeftValueLarger(evalValue(now->lft), evalValue(now->rgt)));
+	case   '&': return intValue(eval(now->lft) &  eval(now->rgt));
 	case   '^': return intValue(eval(now->lft) ^  eval(now->rgt));
-	case   '|': return intValue(eval(now->lft) |  eval(now->rgt));		
-	case    LE: return intValue(eval(now->lft) <= eval(now->rgt));		
-	case    GE: return intValue(eval(now->lft) >= eval(now->rgt));
-	case    NE: return intValue(eval(now->lft) != eval(now->rgt));		
+	case   '|': return intValue(eval(now->lft) |  eval(now->rgt));
+	case    LE: return intValue(
+		!isLeftValueLarger(evalValue(now->lft), evalValue(now->rgt)));
+	case    GE: return intValue(
+		isLeftValueLargerOrEqual(evalValue(now->lft), evalValue(now->rgt)));
+	case    NE: return intValue(eval(now->lft) != eval(now->rgt));
 	case    EQ: return intValue(eval(now->lft) == eval(now->rgt));
 	case    OR: return intValue(eval(now->lft) || eval(now->rgt));
 	case   AND: return intValue(eval(now->lft) && eval(now->rgt));
 	case LSHIFT: return intValue(eval(now->lft) << eval(now->rgt));
-	case RSHIFT: return intValue(eval(now->lft) >> eval(now->rgt));		
+	case RSHIFT: return intValue(eval(now->lft) >> eval(now->rgt));
 	case   '?': return intValue(eval(now->lft) ? eval(now->rgt->lft)
-					   : eval(now->rgt->rgt));		
-	case     'p': return remotevar(now);	/* _p for remote reference */		
+					   : eval(now->rgt->rgt));
+	case     'p': return remotevar(now);	/* _p for remote reference */
 	case     'q': return intValue(remotelab(now));
-	case     'R': return intValue(qrecv(now, 0));	/* test only    */		
+	case     'R': return intValue(qrecv(now, 0));	/* test only    */
 	case     LEN: return intValue(qlen(now));
-	case    FULL: return intValue(qfull(now));		
-	case   EMPTY: return intValue(qlen(now)==0);		
-	case   NFULL: return intValue(!qfull(now));		
+	case    FULL: return intValue(qfull(now));
+	case   EMPTY: return intValue(qlen(now)==0);
+	case   NFULL: return intValue(!qfull(now));
 	case  NEMPTY: return intValue(qlen(now)>0);
 	case ENABLED: return intValue(s_trail?1:pc_enabled(now->lft));
 	case GET_P: return intValue(get_priority(now->lft));
 	case SET_P: set_priority(now->lft->lft, now->lft->rgt);
-		return intValue(1);		
+		return intValue(1);
 	case    EVAL:	if (now->lft->ntyp == ',')
 			{	Lextok *fix = now->lft;
 				do {					/* new */
@@ -535,28 +572,28 @@ evalValue(Lextok *now)
 			return intValue(eval(now->lft));
 
 	case  PC_VAL:
-		return intValue(pc_value(now->lft));	 	
+		return intValue(pc_value(now->lft));
 	case NONPROGRESS:
-		return intValue(nonprogress());	 	
+		return intValue(nonprogress());
 	case    NAME:
 		return getval(now);
 	case TIMEOUT:
-		return intValue(Tval);  
+		return intValue(Tval);
 	case     RUN:
 		return intValue(TstOnly?1:enable(now));
 	case   's':
 		/* send         */
-		return intValue(qsend(now));	 	
-	case   'r': 
+		return intValue(qsend(now));
+	case   'r':
 		/* receive or poll */
 		return intValue(qrecv(now, 1));
-	case   'c': 
+	case   'c':
 		/* condition    */
 		return intValue(eval(now->lft));
-	case PRINT: 
-		return intValue(TstOnly?1:interprint(stdout, now));		
+	case PRINT:
+		return intValue(TstOnly?1:interprint(stdout, now));
 	case PRINTM:
-		return intValue(TstOnly?1:printm(stdout, now));				
+		return intValue(TstOnly?1:printm(stdout, now));
 	case  ASGN:
 		if (is_typedef(check_track(now)))
 		{
@@ -580,8 +617,8 @@ evalValue(Lextok *now)
 		/* uninterpreted */
 		return intValue(1);
 
-	case ASSERT: 
-		if (TstOnly || eval(now->lft)) 
+	case ASSERT:
+		if (TstOnly || eval(now->lft))
 		{
 			return intValue(1);
 		}
@@ -589,15 +626,15 @@ evalValue(Lextok *now)
 		printf("spin: text of failed assertion: assert(");
 		comment(stdout, now->lft, 0);
 		printf(")\n");
-		if (s_trail && !xspin) 
+		if (s_trail && !xspin)
 		{
-			return intValue(1);		
+			return intValue(1);
 		}
 		wrapup(1); /* doesn't return */
 		assert(0 && "Wrapup should not return");
 
 	case  IF: case DO: case BREAK: case UNLESS:	/* compound */
-	case   '.': 
+	case   '.':
 		/* return label for compound */
 		return intValue(1);
 	case   '@':
@@ -609,7 +646,7 @@ evalValue(Lextok *now)
 	case ',':	/* reached through option -A with array initializer */
 	case 0:
 		/* not great, but safe */
-		return intValue(0);		
+		return intValue(0);
 	default   : printf("spin: bad node type %d (run)\n", now->ntyp);
 		if (s_trail) printf("spin: trail file doesn't match spec?\n");
 			fatal("aborting", 0);
@@ -620,7 +657,7 @@ evalValue(Lextok *now)
 
 int
 eval(Lextok *now)
-{	
+{
 	Value value = evalValue(now);
 	switch (value.kind) {
 		case VALUE_FLOAT:
