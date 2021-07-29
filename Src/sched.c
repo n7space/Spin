@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "spin.h"
 #include "y.tab.h"
+#include "utils.h"
 
 extern int	verbose, s_trail, analyze, no_wrapup;
 extern char	*claimproc, *eventmap, GBuf[];
@@ -869,7 +870,7 @@ addsymbol(RunList *r, Symbol  *s)
 	t->bscp  = (unsigned char *) emalloc(strlen((const char *)s->bscp)+1);
 	strcpy((char *)t->bscp, (const char *)s->bscp);
 
-	if (s->type != STRUCT)
+	if (!is_typedef(s->type))
 	{	if (s->val)	/* if already initialized, copy info */
 		{	t->val = (int *) emalloc(s->nel*sizeof(int));
 			for (i = 0; i < s->nel; i++)
@@ -909,7 +910,7 @@ setlocals(RunList *r)
 		||  sp->type == CHAN
 		||  sp->type == SHORT
 		||  sp->type == INT
-		||  sp->type == STRUCT))
+		||  is_typedef(sp->type)))
 		{	if (!findloc(sp))
 			non_fatal("setlocals: cannot happen '%s'",
 				sp->name);
@@ -1007,7 +1008,7 @@ getlocal(Lextok *sn)
 	int n = eval(sn->lft);
 
 	r = findloc(s);
-	if (r && r->type == STRUCT)
+	if (r && is_typedef(r->type))
 		return Rval_struct(sn, r, 1); /* 1 = check init */
 	if (in_bound(r, n))
 		return cast_val(r->type, r->val[n], r->nbits);
@@ -1020,7 +1021,7 @@ setlocal(Lextok *p, int m)
 	int n = eval(p->lft);
 
 	if (in_bound(r, n))
-	{	if (r->type == STRUCT)
+	{	if (is_typedef(r->type))
 			(void) Lval_struct(p, r, 1, m); /* 1 = check init */
 		else
 		{

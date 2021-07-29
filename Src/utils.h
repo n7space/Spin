@@ -1,4 +1,4 @@
-/***** spin: version.h *****/
+/***** spin: utils.h *****/
 
 /*
  * This file is part of the public release of Spin. It is subject to the
@@ -6,4 +6,9 @@
  * Tool documentation is available at http://spinroot.com
  */
 
-#define SpinVersion	"Spin Version 6.5.1 N7S Custom - Work-in-Progress"
+#ifndef SEEN_UTILS_H
+#define SEEN_UTILS_H
+
+int is_typedef(const unsigned short type);
+
+#endif

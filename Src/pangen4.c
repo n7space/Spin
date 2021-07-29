@@ -8,6 +8,7 @@
 
 #include "spin.h"
 #include "y.tab.h"
+#include "utils.h"
 
 extern FILE	*fd_tc, *fd_tb;
 extern Queue	*qtab;
@@ -161,7 +162,7 @@ undostmnt(Lextok *now, int m)
 		break;
 
 	case ASGN:
-		if (check_track(now) == STRUCT) { break; }
+		if (is_typedef(check_track(now))) { break; }
 
 		nocast=1; putstmnt(fd_tb, now->lft, m);
 		nocast=0; fprintf(fd_tb, " = trpt->bup.oval");

@@ -1,0 +1,16 @@
+name: Workflow
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Build and test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: make -C Src spin
+
+      - name: Check
+        run: make -C Test check

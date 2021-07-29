@@ -7,12 +7,15 @@
  */
 
 #include "spin.h"
+#include "utils.h"
+#include <assert.h>
 #include "y.tab.h"
 
 typedef struct UType {
 	Symbol *nm;	/* name of the type */
 	Lextok *cn;	/* contents */
 	struct UType *nxt;	/* linked list */
+	unsigned short type;
 } UType;
 
 extern	Symbol	*Fname;
@@ -28,9 +31,9 @@ extern void	sr_mesg(FILE *, int, int, const char *);
 extern void	Done_case(char *, Symbol *);
 
 void
-setuname(Lextok *n)
+setuname(Lextok *n, unsigned short type)
 {	UType *tmp;
-
+	assert(is_typedef(type));
 	if (!owner)
 		fatal("illegal reference inside typedef", (char *) 0);
 
@@ -43,6 +46,7 @@ setuname(Lextok *n)
 
 	tmp = (UType *) emalloc(sizeof(UType));
 	tmp->nm = owner;
+	tmp->type = type;
 	tmp->cn = n;
 	tmp->nxt = Unames;
 	Unames = tmp;
@@ -54,7 +58,20 @@ putUname(FILE *fd, UType *tmp)
 
 	if (!tmp) return;
 	putUname(fd, tmp->nxt); /* postorder */
-	fprintf(fd, "struct %s { /* user defined type */\n",
+	const char* type_string;
+	switch (tmp->type) {
+		case STRUCT:
+			type_string = "struct";
+		break;
+		case UNION_STRUCT:
+			type_string = "union";
+		break;
+		default:
+			/* This codebase does not know "bool" type */
+			assert(0 && "Incorrect typedef kind");
+	}
+	fprintf(fd, "%s %s { /* user defined type */\n",
+		type_string,
 		tmp->nm->name);
 	for (fp = tmp->cn; fp; fp = fp->rgt)
 	for (tl = fp->lft; tl; tl = tl->rgt)
@@ -91,6 +108,18 @@ getuname(Symbol *t)
 	return (Lextok *)0;
 }
 
+unsigned short
+getutype(Symbol *t)
+{	UType *tmp;
+
+	for (tmp = Unames; tmp; tmp = tmp->nxt)
+	{	if (!strcmp(t->name, tmp->nm->name))
+			return tmp->type;
+	}
+	fatal("%s is not a typename", t->name);
+	return 0;
+}
+
 void
 setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 {	int oln = lineno;
@@ -98,6 +127,7 @@ setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 	Lextok *m, *n;
 
 	m = getuname(t);
+	const unsigned short type = getutype(t);
 	for (n = p; n; n = n->rgt)
 	{	lineno = n->ln;
 		Fname = n->fn;
@@ -121,10 +151,11 @@ setutype(Lextok *p, Symbol *t, Lextok *vis)	/* user-defined types */
 			else if (strncmp(vis->sym->name, ":local:", (size_t) 7) == 0)
 				n->sym->hidden |= 64;
 		}
-		n->sym->type = STRUCT;	/* classification   */
-		n->sym->Slst = m;	/* structure itself */
-		n->sym->Snm  = t;	/* name of typedef  */
-		n->sym->Nid  = 0;	/* this is no chan  */
+
+		n->sym->type = type; /* classification   */
+		n->sym->Slst = m;	 /* structure itself */
+		n->sym->Snm  = t;	 /* name of typedef  */
+		n->sym->Nid  = 0;	 /* this is no chan  */
 		n->sym->hidden |= 4;
 		if (n->sym->nel <= 0)
 		non_fatal("bad array size for '%s'", n->sym->name);
@@ -142,7 +173,7 @@ do_same(Lextok *n, Symbol *v, int xinit)
 
 	lineno = n->ln;
 	Fname = n->fn;
-	
+
 	/* n->sym->type == STRUCT
 	 * index:		n->lft
 	 * subfields:		n->rgt
@@ -192,7 +223,7 @@ Rval_struct(Lextok *n, Symbol *v, int xinit)	/* n varref, v valref */
 		return 0;
 
 	tmp = n->rgt->lft;
-	if (tmp->sym->type == STRUCT)
+	if (is_typedef(tmp->sym->type))
 	{	return Rval_struct(tmp, tl, 0);
 	} else if (tmp->rgt)
 		fatal("non-zero 'rgt' on non-structure", 0);
@@ -215,7 +246,7 @@ Lval_struct(Lextok *n, Symbol *v, int xinit, int a)  /* a = assigned value */
 		return 1;
 
 	tmp = n->rgt->lft;
-	if (tmp->sym->type == STRUCT)
+	if (is_typedef(tmp->sym->type))
 		return Lval_struct(tmp, tl, 0, a);
 	else if (tmp->rgt)
 		fatal("non-zero 'rgt' on non-structure", 0);
@@ -248,7 +279,7 @@ Cnt_flds(Lextok *m)
 		goto is_lst;
 	}
 	if (!m->sym
-	||  m->ntyp != STRUCT)
+	||  !is_typedef(m->ntyp))
 	{	return 1;
 	}
 
@@ -256,7 +287,7 @@ Cnt_flds(Lextok *m)
 is_lst:
 	for (fp = n; fp; fp = fp->rgt)
 	for (tl = fp->lft; tl; tl = tl->rgt)
-	{	if (tl->sym->type == STRUCT)
+	{	if (is_typedef(tl->sym->type))
 		{	if (tl->sym->nel > 1 || tl->sym->isarray)
 				fatal("array of structures in param list, %s",
 					tl->sym->name);
@@ -273,13 +304,16 @@ Sym_typ(Lextok *t)
 
 	if (!s) return 0;
 
-	if (s->type != STRUCT)
+	if (!is_typedef(s->type))
 		return s->type;
 
+	// TODO STRUCT UNION - analyze impact of returning STRUCT from here
 	if (!t->rgt
 	||   t->rgt->ntyp != '.'	/* gh: had ! in wrong place */
-	||  !t->rgt->lft)
+	||  !t->rgt->lft) {
+		printf("WARNING: returning STRUCT for %s\n", s->name);
 		return STRUCT;		/* not a field reference */
+	}
 
 	return Sym_typ(t->rgt->lft);
 }
@@ -291,7 +325,7 @@ Width_set(int *wdth, int i, Lextok *n)
 
 	for (fp = n; fp; fp = fp->rgt)
 	for (tl = fp->lft; tl; tl = tl->rgt)
-	{	if (tl->sym->type == STRUCT)
+	{	if (is_typedef(tl->sym->type))
 			j = Width_set(wdth, j, tl->sym->Slst);
 		else
 		{	for (k = 0; k < tl->sym->nel; k++, j++)
@@ -304,7 +338,7 @@ void
 ini_struct(Symbol *s)
 {	int i; Lextok *fp, *tl;
 
-	if (s->type != STRUCT)	/* last step */
+	if (!is_typedef(s->type))	/* last step */
 	{	(void) checkvar(s, 0);
 		return;
 	}
@@ -359,7 +393,7 @@ full_name(FILE *fd, Lextok *n, Symbol *v, int xinit)
 		return 0;
 	tmp = n->rgt->lft;
 
-	if (tmp->sym->type == STRUCT)
+	if (is_typedef(tmp->sym->type))
 	{	fprintf(fd, ".");
 		hiddenarrays = full_name(fd, tmp, tl, 0);
 		goto out;
@@ -396,7 +430,7 @@ struct_name(Lextok *n, Symbol *v, int xinit, char *buf)
 	if (!n || !(tl = do_same(n, v, xinit)))
 		return;
 	tmp = n->rgt->lft;
-	if (tmp->sym->type == STRUCT)
+	if (is_typedef(tmp->sym->type))
 	{	strcat(buf, ".");
 		struct_name(tmp, tl, 0, buf);
 		return;
@@ -424,7 +458,7 @@ walk2_struct(char *s, Symbol *z)
 			snprintf(eprefix, sizeof(eprefix)-1, "%s%s[%d].", s, z->name, ix);
 		for (fp = z->Sval[ix]; fp; fp = fp->rgt)
 		for (tl = fp->lft; tl; tl = tl->rgt)
-		{	if (tl->sym->type == STRUCT)
+		{	if (is_typedef(tl->sym->type))
 				walk2_struct(eprefix, tl->sym);
 			else if (tl->sym->type == CHAN)
 				Done_case(eprefix, tl->sym);
@@ -446,7 +480,7 @@ walk_struct(FILE *ofd, int dowhat, char *s, Symbol *z, char *a, char *b, char *c
 			snprintf(eprefix, sizeof(eprefix)-1, "%s%s[%d].", s, z->name, ix);
 		for (fp = z->Sval[ix]; fp; fp = fp->rgt)
 		for (tl = fp->lft; tl; tl = tl->rgt)
-		{	if (tl->sym->type == STRUCT)
+		{	if (is_typedef(tl->sym->type))
 			 walk_struct(ofd, dowhat, eprefix, tl->sym, a,b,c);
 			else
 			 do_var(ofd, dowhat, eprefix, tl->sym, a,b,c);
@@ -471,7 +505,7 @@ c_struct(FILE *fd, char *ipref, Symbol *z)
 			sprintf(pref, "[ %d ].", ix);
 			strcat(eprefix, pref);
 		}
-		if (tl->sym->type == STRUCT)
+		if (is_typedef(tl->sym->type))
 		{	strcat(eprefix, tl->sym->name);
 			strcat(eprefix, ".");
 			c_struct(fd, eprefix, tl->sym);
@@ -493,10 +527,10 @@ dump_struct(Symbol *z, char *prefix, RunList *r)
 			sprintf(eprefix, "%s[%d]", prefix, ix);
 		else
 			strcpy(eprefix, prefix);
-		
+
 		for (fp = z->Sval[ix]; fp; fp = fp->rgt)
 		for (tl = fp->lft; tl; tl = tl->rgt)
-		{	if (tl->sym->type == STRUCT)
+		{	if (is_typedef(tl->sym->type))
 			{	char pref[300];
 				strcpy(pref, eprefix);
 				strcat(pref, ".");
@@ -535,7 +569,7 @@ retrieve(Lextok **targ, int i, int want, Lextok *n, int Ntyp)
 
 	for (fp = n; fp; fp = fp->rgt)
 	for (tl = fp->lft; tl; tl = tl->rgt)
-	{	if (tl->sym->type == STRUCT)
+	{	if (is_typedef(tl->sym->type))
 		{	j = retrieve(targ, j, want, tl->sym->Slst, Ntyp);
 			if (j < 0)
 			{	Lextok *x = cpnn(tl, 1, 0, 0);
@@ -562,7 +596,7 @@ is_explicit(Lextok *n)
 {
 	if (!n) return 0;
 	if (!n->sym) fatal("unexpected - no symbol", 0);
-	if (n->sym->type != STRUCT) return 1;
+	if (!is_typedef(n->sym->type)) return 1;
 	if (!n->rgt) return 0;
 	if (n->rgt->ntyp != '.')
 	{	lineno = n->ln;
@@ -598,7 +632,7 @@ mk_explicit(Lextok *n, int Ok, int Ntyp)
 {	Lextok *bld = ZN, *x;
 	int i, cnt; extern int IArgs;
 
-	if (n->sym->type != STRUCT
+	if (!is_typedef(n->sym->type)
 	||  in_for
 	||  is_explicit(n))
 		return n;
@@ -608,7 +642,7 @@ mk_explicit(Lextok *n, int Ok, int Ntyp)
 	&&  n->rgt->ntyp == '.'
 	&&  n->rgt->lft
 	&&  n->rgt->lft->sym
-	&&  n->rgt->lft->sym->type == STRUCT)
+	&&  is_typedef(n->rgt->lft->sym->type))
 	{	Lextok *y;
 		bld = mk_explicit(n->rgt->lft, Ok, Ntyp);
 		for (x = bld; x; x = x->rgt)
