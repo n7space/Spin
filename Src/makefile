@@ -6,7 +6,7 @@
 
 CC?=gcc
 
-CFLAGS?=-O2 -DNXT -Wall -pedantic -g
+CFLAGS?=-O2 -DNXT -Wall -pedantic
 	# on some systems add: -I/usr/include
 	# on a PC:    make CFLAGS="-O2 -DNXT -DPC"
 	# on Solaris: make CFLAGS="-O2 -DNXT -DSOLARIS"
