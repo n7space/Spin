@@ -50,6 +50,16 @@ typedef struct Access {
 	struct Access	*lnk;	/* linked list */
 } Access;
 
+typedef enum {VALUE_FLOAT, VALUE_INT} ValueKind;
+
+typedef struct {
+	ValueKind kind;
+	union {
+		int intValue;
+		float floatValue;
+	} value;
+} Value;
+
 typedef struct Symbol {
 	char	*name;
 	int	Nid;		/* unique number for the name */
@@ -67,7 +77,7 @@ typedef struct Symbol {
 	int	nbits;		/* optional width specifier */
 	int	nel;		/* 1 if scalar, >1 if array   */
 	int	setat;		/* last depth value changed   */
-	int	*val;		/* runtime value(s), initl 0  */
+	Value *val;		/* runtime value(s), initl 0  */
 	Lextok	**Sval;	/* values for structures */
 
 	int	xu;		/* exclusive r or w by 1 pid  */
@@ -81,16 +91,6 @@ typedef struct Symbol {
 	struct Symbol	*context; /* 0 if global, or procname */
 	struct Symbol	*next;	/* linked list */
 } Symbol;
-
-typedef enum {VALUE_FLOAT, VALUE_INT} ValueKind;
-
-typedef struct {
-	ValueKind kind;
-	union {
-		int intValue;
-		float floatValue;
-	} value;
-} Value;
 
 typedef struct Ordered {	/* links all names in Symbol table */ 
 	struct Symbol	*entry;
@@ -109,7 +109,7 @@ typedef struct Queue {
 	int	nslots, nflds;	/* capacity, flds/slot */
 	int	setat;		/* last depth value changed */
 	int	*fld_width;	/* type of each field */
-	int	*contents;	/* the values stored */
+	Value *contents;	/* the values stored */
 	int	*stepnr;	/* depth when each msg was sent */
 	char	**mtp;		/* if mtype, name of list, else 0 */
 	struct Queue	*nxt;	/* linked list */
@@ -312,7 +312,7 @@ long	Rand(void);
 int	any_oper(Lextok *, int);
 int	any_undo(Lextok *);
 int	c_add_sv(FILE *);
-int	cast_val(int, int, int);
+Value cast_val(int, Value, int);
 int	checkvar(Symbol *, int);
 int	check_track(Lextok *);
 int	Cnt_flds(Lextok *);
@@ -320,13 +320,20 @@ int	cnt_mpars(Lextok *);
 int	complete_rendez(void);
 int	enable(Lextok *);
 int	Enabled0(Element *);
-Value	evalInternal(Lextok *);
+int isValueEqual(const Value a, const int b);
+int areValuesEqual(const Value a, const Value b);
+int isLeftValueLarger(const Value a, const Value b);
+Value evalValue(Lextok *);
+Value intValue(const int value);	
+Value floatValue(const float value);
+float getFloat(const Value value);
+int getInt(const Value value);
 int	eval(Lextok *);
 int	find_lab(Symbol *, Symbol *, int);
 int	find_maxel(Symbol *);
 int	full_name(FILE *, Lextok *, Symbol *, int);
-int	getlocal(Lextok *);
-int	getval(Lextok *);
+Value getlocal(Lextok *);
+Value getval(Lextok *);
 int	glob_inline(char *);
 int	has_typ(Lextok *, int);
 int	in_bound(Symbol *, int);
@@ -336,7 +343,7 @@ int	is_inline(void);
 int	ismtype(char *);
 int	isproctype(char *);
 int	isutype(char *);
-int	Lval_struct(Lextok *, Symbol *, int, int);
+Value Lval_struct(Lextok *, Symbol *, int, Value);
 int	main(int, char **);
 int	pc_value(Lextok *);
 int	pid_is_claim(int);
@@ -349,10 +356,10 @@ int	qmake(Symbol *);
 int	qrecv(Lextok *, int);
 int	qsend(Lextok *);
 int	remotelab(Lextok *);
-int	remotevar(Lextok *);
-int	Rval_struct(Lextok *, Symbol *, int);
-int	setlocal(Lextok *, int);
-int	setval(Lextok *, int);
+Value remotevar(Lextok *);
+Value Rval_struct(Lextok *, Symbol *, int);
+int	setlocal(Lextok *, Value);
+int setval(Lextok *, Value);
 int	sputtype(char *, int);
 int	Sym_typ(Lextok *);
 int	tl_main(int, char *[]);

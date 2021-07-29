@@ -213,14 +213,14 @@ do_same(Lextok *n, Symbol *v, int xinit)
 	return ZS;
 }
 
-int
+Value
 Rval_struct(Lextok *n, Symbol *v, int xinit)	/* n varref, v valref */
 {	Symbol *tl;
 	Lextok *tmp;
 	int ix;
 
 	if (!n || !(tl = do_same(n, v, xinit)))
-		return 0;
+		return intValue(0);
 
 	tmp = n->rgt->lft;
 	if (is_typedef(tmp->sym->type))
@@ -236,14 +236,14 @@ Rval_struct(Lextok *n, Symbol *v, int xinit)	/* n varref, v valref */
 	return cast_val(tl->type, tl->val[ix], tl->nbits);
 }
 
-int
-Lval_struct(Lextok *n, Symbol *v, int xinit, int a)  /* a = assigned value */
+Value
+Lval_struct(Lextok *n, Symbol *v, int xinit, Value a)  /* a = assigned value */
 {	Symbol *tl;
 	Lextok *tmp;
 	int ix;
 
 	if (!(tl = do_same(n, v, xinit)))
-		return 1;
+		return intValue(1);
 
 	tmp = n->rgt->lft;
 	if (is_typedef(tmp->sym->type))
@@ -256,13 +256,16 @@ Lval_struct(Lextok *n, Symbol *v, int xinit, int a)  /* a = assigned value */
 		fatal("indexing error \'%s\'", tl->name);
 
 	if (tl->nbits > 0)
-		a = (a & ((1<<tl->nbits)-1));
+	{
+		const int temp = getInt(a);
+		a = intValue(temp & ((1<<tl->nbits)-1));
+	}
 
-	if (a != tl->val[ix])
+	if (!areValuesEqual(a, tl->val[ix]))
 	{	tl->val[ix] = a;
 		tl->setat = depth;
 	}
-	return 1;
+	return intValue(1);
 }
 
 int
@@ -555,7 +558,7 @@ dump_struct(Symbol *z, char *prefix, RunList *r)
 					{	s = tl->sym->mtype_name->name;
 					}
 
-					sr_mesg(stdout, tl->sym->val[jx],
+					sr_mesg(stdout, getInt(tl->sym->val[jx]),
 						tl->sym->type == MTYPE, s);
 					printf("\n");
 		}	}	}
