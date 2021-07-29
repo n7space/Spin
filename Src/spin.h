@@ -18,6 +18,7 @@
 #ifndef PC
  #include <memory.h>
 #endif
+#include "value.h"
 
 enum	    { INIV, PUTV, LOGV }; /* used in pangen1.c */
 enum btypes { NONE, N_CLAIM, I_PROC, A_PROC, P_PROC, E_TRACE, N_TRACE };
@@ -49,16 +50,6 @@ typedef struct Access {
 	int	cnt, typ;	/* parameter nr and, e.g., 's' or 'r' */
 	struct Access	*lnk;	/* linked list */
 } Access;
-
-typedef enum {VALUE_FLOAT, VALUE_INT} ValueKind;
-
-typedef struct {
-	ValueKind kind;
-	union {
-		int intValue;
-		float floatValue;
-	} value;
-} Value;
 
 typedef struct Symbol {
 	char	*name;
@@ -320,15 +311,7 @@ int	cnt_mpars(Lextok *);
 int	complete_rendez(void);
 int	enable(Lextok *);
 int	Enabled0(Element *);
-int isValueEqual(const Value a, const int b);
-int areValuesEqual(const Value a, const Value b);
-int isLeftValueLargerOrEqual(const Value a, const Value b);
-int isLeftValueLarger(const Value a, const Value b);
 Value evalValue(Lextok *);
-Value intValue(const int value);	
-Value floatValue(const float value);
-float getFloat(const Value value);
-int getInt(const Value value);
 int	eval(Lextok *);
 int	find_lab(Symbol *, Symbol *, int);
 int	find_maxel(Symbol *);
