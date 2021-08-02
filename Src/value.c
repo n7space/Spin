@@ -22,7 +22,7 @@ int
 areValuesEqual(const Value a, const Value b)
 {
 	if (a.kind != b.kind)
-		return 0;
+		return getFloat(a) == getFloat(b);
 	if (a.kind == VALUE_INT)
 		return a.value.intValue == b.value.intValue;
 	return a.value.floatValue == b.value.floatValue;

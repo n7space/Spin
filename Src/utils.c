@@ -54,7 +54,9 @@ getType(const Lextok *const token) {
     if (token == NULL)
         return 0;
     const unsigned short result = getTypeInternal(token); 
+#ifdef DEBUG
     const char* name = token->sym != NULL ? token->sym->name : "[unnamed]";
     printf("Token %s type resolved to %d\n", name, result);
+#endif
     return result;
 }
