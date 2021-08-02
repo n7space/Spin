@@ -711,7 +711,7 @@ c_var(FILE *fd, char *pref, Symbol *sp)
 		{	fprintf(fd, "\t{\tint l_in;\n");
 			fprintf(fd, "\t\tfor (l_in = 0; l_in < %d; l_in++)\n", sp->nel);
 			fprintf(fd, "\t\t{\n");
-			fprintf(fd, "\t\t\tprintf(\"\t%s %s[%%f]:\t%%d\\n\", l_in, %s%s[l_in]);\n",
+			fprintf(fd, "\t\t\tprintf(\"\t%s %s[%%d]:\t%%f\\n\", l_in, %s%s[l_in]);\n",
 						buf, ptr, pref, sp->name);
 			fprintf(fd, "\t\t}\n");
 			fprintf(fd, "\t}\n");
