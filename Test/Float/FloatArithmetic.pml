@@ -1,3 +1,13 @@
+// This is needed because dot notation is not yet supported by the lexer
+hidden float tmpN;
+hidden float tmpD;
+
+inline makeFloat(f, nominator, denominator) {
+    tmpN = nominator;
+    tmpD = denominator;
+    f = tmpN / tmpD;
+}
+
 active proctype test() {
     float a;
     float b;
@@ -5,6 +15,10 @@ active proctype test() {
     float rsub;
     float rdiv;
     float rmul;
+    float rdiv_upper;
+    float rdiv_lower;
+    makeFloat(rdiv_lower, 74, 100);
+    makeFloat(rdiv_upper, 76, 100);
     a = 12;
     b = 16;
     radd = a + b;
@@ -14,8 +28,8 @@ active proctype test() {
     assert(radd == 28);
     assert(rsub == -4);
     assert(rmul == 192);
-    assert(rdiv > 0);
-    assert(rdiv < 1);
+    assert(rdiv > rdiv_lower);
+    assert(rdiv < rdiv_upper);
     printf("Float arithmetic: %f and %f == (+)%f (-)%f (*)%f (/)%f\n",
         a, b, radd, rsub, rmul, rdiv);
 }

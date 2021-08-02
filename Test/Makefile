@@ -4,6 +4,7 @@ BASE_DIR=../..
 SPIN?=${BASE_DIR}/Src/spin
 EXAMPLE_MODEL_DIR=${BASE_DIR}/Examples
 USER_TYPES_MODEL_DIR=${BASE_DIR}/Test/UserTypes
+FLOAT_MODEL_DIR=${BASE_DIR}/Test/Float
 TEST_DIR=Out
 
 CC?=gcc
@@ -40,32 +41,40 @@ COMPLEX_TESTS = \
 BENCHMARK = \
 	benchmark_large_message
 
+FLOAT_TESTS = \
+	test_float_arithmetic \
+	test_float_in_struct
+
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
 	${UNION_TESTS} \
 	${COMPLEX_TESTS} \
 	${BENCHMARK} \
-	test_rng_files \
-	check_examples \
-	check_unions \
-	check_typedefs \
-	check_complex \
-	benchmark
-
-.PHONY : ${EXAMPLE_TESTS} \
-	${TYPEDEF_TESTS} \
-	${UNION_TESTS} \
-	${COMPLEX_TESTS} \
-	${BENCHMARK} \
+	${FLOAT_TESTS} \
 	test_rng_files \
 	check_examples \
 	check_unions \
 	check_typedefs \
 	check_complex \
 	benchmark \
+	check_floats
+
+.PHONY : ${EXAMPLE_TESTS} \
+	${TYPEDEF_TESTS} \
+	${UNION_TESTS} \
+	${COMPLEX_TESTS} \
+	${BENCHMARK} \
+	${FLOAT_TESTS} \
+	test_rng_files \
+	check_examples \
+	check_unions \
+	check_typedefs \
+	check_complex \
+	benchmark \
+	check_floats \
 	check
 
-check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} ${UNION_TESTS} ${COMPLEX_TESTS}
+check: ${EXAMPLE_TESTS} ${TYPEDEF_TESTS} ${UNION_TESTS} ${COMPLEX_TESTS} ${FLOAT_TESTS}
 
 check_examples: ${EXAMPLE_TESTS}
 
@@ -74,6 +83,8 @@ check_unions: ${UNION_TESTS}
 check_typedefs: ${TYPEDEF_TESTS}
 
 check_complex: ${COMPLEX_TESTS}
+
+check_floats: ${FLOAT_TESTS}
 
 benchmark: ${BENCHMARK}
 
@@ -425,3 +436,40 @@ benchmark_large_message:
 	grep -q "0 atomic steps" ${TEST_DIR}/LargeMessage.output
 	${DELETE_TEST_DIR}
 
+
+#################################FLOAT#########################################
+
+#Test float arithmetic
+test_float_arithmetic:
+	echo "Test float arithmetic"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatArithmetic.pml > FloatArithmetic.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_MODEL_DIR}/FloatArithmetic.pml > FloatArithmetic.sim.output
+	grep -q "State-vector 44 byte, depth reached 8, errors: 0" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "9 states, stored" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "0 states, matched" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "9 transitions (= stored+matched)" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "0 atomic steps" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "(+)28.00" ${TEST_DIR}/FloatArithmetic.sim.output	
+	grep -q "(-)-4.00" ${TEST_DIR}/FloatArithmetic.sim.output	
+	grep -q "(*)192.00" ${TEST_DIR}/FloatArithmetic.sim.output	
+	grep -q "(/)0.75" ${TEST_DIR}/FloatArithmetic.sim.output	
+	${DELETE_TEST_DIR}
+
+#Test float in struct
+test_float_in_struct:
+	echo "Test float in struct"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatInStruct.pml > FloatInStruct.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_MODEL_DIR}/FloatInStruct.pml > FloatInStruct.sim.output
+	grep -q "State-vector 28 byte, depth reached 109, errors: 0" ${TEST_DIR}/FloatInStruct.output
+	grep -q "110 states, stored" ${TEST_DIR}/FloatInStruct.output
+	grep -q "0 states, matched" ${TEST_DIR}/FloatInStruct.output
+	grep -q "110 transitions (= stored+matched)" ${TEST_DIR}/FloatInStruct.output
+	grep -q "0 atomic steps" ${TEST_DIR}/FloatInStruct.output
+	grep -q "Data is 101 and 10.10" ${TEST_DIR}/FloatInStruct.sim.output		
+	${DELETE_TEST_DIR}
