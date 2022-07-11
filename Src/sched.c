@@ -872,7 +872,7 @@ addsymbol(RunList *r, Symbol  *s)
 
 	if (!is_typedef(s->type))
 	{	if (s->val)	/* if already initialized, copy info */
-		{	t->val = (int *) emalloc(s->nel*sizeof(int));
+		{	t->val = (Value *) emalloc(s->nel*sizeof(Value));
 			for (i = 0; i < s->nel; i++)
 				t->val[i] = s->val[i];
 		} else
@@ -909,6 +909,7 @@ setlocals(RunList *r)
 		||  sp->type == BYTE
 		||  sp->type == CHAN
 		||  sp->type == SHORT
+		||  sp->type == FLOAT
 		||  sp->type == INT
 		||  is_typedef(sp->type)))
 		{	if (!findloc(sp))
@@ -921,14 +922,15 @@ setlocals(RunList *r)
 
 static void
 oneparam(RunList *r, Lextok *t, Lextok *a, ProcList *p)
-{	int k; int at, ft;
+{	int at, ft;
 	RunList *oX = X_lst;
+	Value k;
 
 	if (!a)
 		fatal("missing actual parameters: '%s'", p->n->name);
 	if (t->sym->nel > 1 || t->sym->isarray)
 		fatal("array in parameter list, %s", t->sym->name);
-	k = eval(a->lft);
+	k = evalValue(a->lft);
 
 	at = Sym_typ(a->lft);
 	X_lst = r;	/* switch context */
@@ -1002,7 +1004,7 @@ in_bound(Symbol *r, int n)
 	return 1;
 }
 
-int
+Value
 getlocal(Lextok *sn)
 {	Symbol *r, *s = sn->sym;
 	int n = eval(sn->lft);
@@ -1012,11 +1014,11 @@ getlocal(Lextok *sn)
 		return Rval_struct(sn, r, 1); /* 1 = check init */
 	if (in_bound(r, n))
 		return cast_val(r->type, r->val[n], r->nbits);
-	return 0;
+	return intValue(0);
 }
 
 int
-setlocal(Lextok *p, int m)
+setlocal(Lextok *p, Value m)
 {	Symbol *r = findloc(p->sym);
 	int n = eval(p->lft);
 
@@ -1137,7 +1139,7 @@ remotelab(Lextok *n)
 	return i;
 }
 
-int
+Value
 remotevar(Lextok *n)
 {	int prno, i, added=0;
 	RunList *Y, *oX;
@@ -1159,7 +1161,7 @@ remotevar(Lextok *n)
 	}	}
 
 	if (prno < 0)
-	{	return 0;	/* non-existing process */
+	{	return intValue(0);	/* non-existing process */
 	}
 #if 0
 	i = nproc - nstop;
@@ -1178,10 +1180,10 @@ remotevar(Lextok *n)
 		}
 		if (strcmp(n->sym->name, "_p") == 0)
 		{	if (Y->pc)
-			{	return Y->pc->seqno;
+			{	return intValue(Y->pc->seqno);
 			}
 			/* harmless, can only happen with -t */
-			return 0;
+			return intValue(0);
 		}
 
 		/* check remote variables */
@@ -1200,12 +1202,12 @@ remotevar(Lextok *n)
 		  n->sym = findloc(n->sym);
 		  old_scope_rules = rs;
 		}
-		i = getval(n);
+		const Value tempi = getval(n);
 
 		n->sym = os;
 		n->lft = onl;
 		X_lst = oX;
-		return i;
+		return tempi;
 	}
 	printf("remote ref: %s[%d] ", n->lft->sym->name, prno-added);
 	non_fatal("%s not found", n->sym->name);
@@ -1215,5 +1217,5 @@ remotevar(Lextok *n)
 		if (!strcmp(Y->n->name, n->lft->sym->name))
 		printf("\t%d\t%s\n", i, Y->n->name);
 
-	return 0;
+	return intValue(0);
 }

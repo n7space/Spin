@@ -22,38 +22,38 @@ extern Symbol	*Fname;
 extern void	sr_buf(int, int, const char *);
 extern void	sr_mesg(FILE *, int, int, const char *);
 
-static int	getglobal(Lextok *);
-static int	setglobal(Lextok *, int);
+static Value getglobal(Lextok *);
+static int	setglobal(Lextok *, Value);
 static int	maxcolnr = 1;
 
-int
+Value
 getval(Lextok *sn)
 {	Symbol *s = sn->sym;
 
 	if (strcmp(s->name, "_") == 0)
 	{	non_fatal("attempt to read value of '_'", 0);
-		return 0;
+		return intValue(0);
 	}
 	if (strcmp(s->name, "_last") == 0)
-		return (LastX)?LastX->pid:0;
+		return intValue((LastX)?LastX->pid:0);
 	if (strcmp(s->name, "_p") == 0)
-		return (X_lst && X_lst->pc)?X_lst->pc->seqno:0;
+		return intValue((X_lst && X_lst->pc)?X_lst->pc->seqno:0);
 	if (strcmp(s->name, "_pid") == 0)
-	{	if (!X_lst) return 0;
-		return X_lst->pid - Have_claim;
+	{	if (!X_lst) return intValue(0);
+		return intValue(X_lst->pid - Have_claim);
 	}
 	if (strcmp(s->name, "_priority") == 0)
-	{	if (!X_lst) return 0;
+	{	if (!X_lst) return intValue(0);
 
 		if (old_priority_rules)
 		{	non_fatal("cannot refer to _priority with -o6", (char *) 0);
-			return 1;
+			return intValue(1);
 		}
-		return X_lst->priority;
+		return intValue(X_lst->priority);
 	}
 
 	if (strcmp(s->name, "_nr_pr") == 0)
-	{	return nproc-nstop;	/* new 3.3.10 */
+	{	return intValue(nproc-nstop);	/* new 3.3.10 */
 	}
 
 	if (s->context && s->type)
@@ -69,7 +69,7 @@ getval(Lextok *sn)
 }
 
 int
-setval(Lextok *v, int n)
+setval(Lextok *v, Value n)
 {
 	if (strcmp(v->sym->name, "_last") == 0
 	||  strcmp(v->sym->name, "_p") == 0
@@ -87,7 +87,7 @@ setval(Lextok *v, int n)
 		{	non_fatal("no context for _priority", (char *) 0);
 			return 1;
 		}
-		X_lst->priority = n;
+		X_lst->priority = getInt(n);
 	}
 
 	if (v->sym->context && v->sym->type)
@@ -132,8 +132,8 @@ checkvar(Symbol *s, int n)
 		s->type = INT;
 	}
 	/* not a STRUCT */
-	if (s->val == (int *) 0)	/* uninitialized */
-	{	s->val = (int *) emalloc(s->nel*sizeof(int));
+	if (s->val == (Value *) 0)	/* uninitialized */
+	{	s->val = (Value *) emalloc(s->nel*sizeof(Value));
 		z = s->ini;
 		for (i = 0; i < s->nel; i++)
 		{	if (z && z->ntyp == ',')
@@ -144,9 +144,9 @@ checkvar(Symbol *s, int n)
 			}
 			if (s->type != CHAN)
 			{	rm_selfrefs(s, y);
-				s->val[i] = eval(y);
+				s->val[i] = evalValue(y);
 			} else if (!analyze)
-			{	s->val[i] = qmake(s);
+			{	s->val[i] = intValue(qmake(s));
 	}	}	}
 	lineno = oln;
 	Fname  = ofnm;
@@ -154,14 +154,14 @@ checkvar(Symbol *s, int n)
 	return 1;
 }
 
-static int
+static Value
 getglobal(Lextok *sn)
 {	Symbol *s = sn->sym;
 	int i, n = eval(sn->lft);
 
 	if (s->type == 0 && X_lst && (i = find_lab(s, X_lst->n, 0)))	/* getglobal */
 	{	printf("findlab through getglobal on %s\n", s->name);
-		return i;	/* can this happen? */
+		return intValue(i);	/* can this happen? */
 	}
 	if (is_typedef(s->type))
 	{	return Rval_struct(sn, s, 1); /* 1 = check init */
@@ -169,43 +169,45 @@ getglobal(Lextok *sn)
 	if (checkvar(s, n))
 	{	return cast_val(s->type, s->val[n], s->nbits);
 	}
-	return 0;
+	return intValue(0);
 }
 
-int
-cast_val(int t, int v, int w)
+Value
+cast_val(int t, Value v, int w)
 {	int i=0; short s=0; unsigned int u=0;
-
-	if (t == PREDEF || t == INT || t == CHAN) i = v;	/* predef means _ */
-	else if (t == SHORT) s = (short) v;
-	else if (t == BYTE || t == MTYPE)  u = (unsigned char)v;
-	else if (t == BIT)   u = (unsigned char)(v&1);
+	int iv = getInt(v);
+	if (t == FLOAT)
+		return floatValue(getFloat(v));
+	else if (t == PREDEF || t == INT || t == CHAN) i = iv;	/* predef means _ */
+	else if (t == SHORT) s = (short) iv;
+	else if (t == BYTE || t == MTYPE)  u = (unsigned char)iv;
+	else if (t == BIT)   u = (unsigned char)(iv&1);
 	else if (t == UNSIGNED)
 	{	if (w == 0)
 			fatal("cannot happen, cast_val", (char *)0);
 	/*	u = (unsigned)(v& ((1<<w)-1));		problem when w=32	*/
-		u = (unsigned)(v& (~0u>>(8*sizeof(unsigned)-w)));	/* doug */
+		u = (unsigned)(iv& (~0u>>(8*sizeof(unsigned)-w)));	/* doug */
 	}
 
-	if (v != i+s+ (int) u)
-	{	char buf[64]; sprintf(buf, "%d->%d (%d)", v, i+s+(int)u, t);
+	if (iv != i+s+ (int) u)
+	{	char buf[64]; sprintf(buf, "%d->%d (%d)", iv, i+s+(int)u, t);
 		non_fatal("value (%s) truncated in assignment", buf);
 	}
-	return (int)(i+s+(int)u);
+	return intValue((int)(i+s+(int)u));
 }
 
 static int
-setglobal(Lextok *v, int m)
+setglobal(Lextok *v, Value m)
 {
 	if (is_typedef(v->sym->type))
 	{	(void) Lval_struct(v, v->sym, 1, m);
 	} else
 	{	int n = eval(v->lft);
 		if (checkvar(v->sym, n))
-		{	int oval = v->sym->val[n];
-			int nval = cast_val(v->sym->type, m, v->sym->nbits);
+		{	Value oval = v->sym->val[n];
+			Value nval = cast_val(v->sym->type, m, v->sym->nbits);
 			v->sym->val[n] = nval;
-			if (oval != nval)
+			if (!areValuesEqual(oval, nval))
 			{	v->sym->setat = depth;
 	}	}	}
 	return 1;
@@ -283,7 +285,7 @@ dumpglobals(void)
 			dummy->sym = sp;
 			dummy->lft->val = j;
 			/* in case of cast_val warnings, do this first: */
-			prefetch = getglobal(dummy);
+			prefetch = getInt(getglobal(dummy));
 			printf("\t\t%s", sp->name);
 			if (sp->nel > 1 || sp->isarray) printf("[%d]", j);
 			printf(" = ");
@@ -371,7 +373,7 @@ dumplocal(RunList *r, int final)
 			&&  z->mtype_name)
 			{	t = z->mtype_name->name;
 			}
-			sr_mesg(stdout, getval(dummy), z->type == MTYPE, t);
+			sr_mesg(stdout, getInt(getval(dummy)), z->type == MTYPE, t);
 			printf("\n");
 			if (limited_vis && (z->hidden&2))
 			{	int colpos;
@@ -384,7 +386,7 @@ dumplocal(RunList *r, int final)
 					sprintf(GBuf, "%s(%d):%s = ",
 					r->n->name, r->pid, z->name);
 				}
-				sr_buf(getval(dummy), z->type==MTYPE, t);
+				sr_buf(getInt(getval(dummy)), z->type==MTYPE, t);
 				if (z->colnr == 0)
 				{	z->colnr = (unsigned char) maxcolnr;
 					maxcolnr = 1+(maxcolnr%10);

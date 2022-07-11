@@ -39,7 +39,7 @@ extern void	c_stack_size(FILE *);
 
 static Symbol	*LstSet=ZS;
 static int	acceptors=0, progressors=0, nBits=0;
-static int	Types[] = { UNSIGNED, BIT, BYTE, CHAN, MTYPE, SHORT, INT, STRUCT, UNION_STRUCT };
+static int	Types[] = { UNSIGNED, BIT, BYTE, CHAN, MTYPE, SHORT, INT, STRUCT, UNION_STRUCT, FLOAT };
 static const int  Types_Count = sizeof(Types)/sizeof(int);
 
 static int	doglobal(char *, int);
@@ -514,6 +514,7 @@ checktype(Symbol *sp, char *s)
 	if (!s
 	|| (sp->type != BYTE
 	&&  sp->type != SHORT
+	&&  sp->type != FLOAT
 	&&  sp->type != INT))
 		return;
 
@@ -700,6 +701,22 @@ c_var(FILE *fd, char *pref, Symbol *sp)
 		sprintf(buf, "%s%s.", pref, sp->name);
 		c_struct(fd, buf, sp);
 		break;		
+	case FLOAT:		
+		sputtype(buf, sp->type);
+		if (sp->nel == 1 && sp->isarray == 0)
+		{
+			fprintf(fd, "\tprintf(\"\t%s %s:\t%%f\\n\", %s%s);\n",
+				buf, ptr, pref, sp->name);
+		} else
+		{	fprintf(fd, "\t{\tint l_in;\n");
+			fprintf(fd, "\t\tfor (l_in = 0; l_in < %d; l_in++)\n", sp->nel);
+			fprintf(fd, "\t\t{\n");
+			fprintf(fd, "\t\t\tprintf(\"\t%s %s[%%d]:\t%%f\\n\", l_in, %s%s[l_in]);\n",
+						buf, ptr, pref, sp->name);
+			fprintf(fd, "\t\t}\n");
+			fprintf(fd, "\t}\n");
+		}
+		break;	
 	case MTYPE:
 	case BIT:   case BYTE:
 	case SHORT: case INT:
@@ -1047,6 +1064,8 @@ put_ptype(char *s, int i, int m0, int m1, enum btypes b)
 			fprintf(fd_th, "short)"); break;
 		case INT:
 			fprintf(fd_th, "int)"); break;
+		case FLOAT:
+			fprintf(fd_th, "float)"); break;
 		default:
 			fatal("cannot happen Air %s",
 				LstSet->name);
@@ -1323,6 +1342,10 @@ typ2c(Symbol *sp)
 		fprintf(fd_th, "\tshort %s", sp->name);
 		LstSet = sp;
 		break;
+	case FLOAT:
+		fprintf(fd_th, "\tfloat %s", sp->name);
+		LstSet = sp;
+		break;		
 	case INT:
 		fprintf(fd_th, "\tint %s", sp->name);
 		LstSet = sp;
@@ -1424,6 +1447,9 @@ genaddqueue(void)
 			case SHORT:
 				fprintf(fd_th, "\t\tshort fld%d;\n", j);
 				break;
+			case FLOAT:
+				fprintf(fd_th, "\t\tfloat fld%d;\n", j);
+				break;				
 			case INT:
 				fprintf(fd_th, "\t\tint fld%d;\n", j);
 				break;

@@ -1229,6 +1229,7 @@ AST_suggestions(void)
 		if (s->colnr == 2	/* only used in conditionals */
 		&&  (s->type == BYTE
 		||   s->type == SHORT
+		||   s->type == FLOAT
 		||   s->type == INT
 		||   s->type == MTYPE))
 		{	if (!banner)

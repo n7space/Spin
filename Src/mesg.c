@@ -83,7 +83,7 @@ qmake(Symbol *s)
 	i = max(1, q->nslots);	/* 0-slot qs get 1 slot minimum */
 	j = q->nflds * i;
 
-	q->contents  = (int *) emalloc(j*sizeof(int));
+	q->contents  = (Value *) emalloc(j*sizeof(Value));
 	q->fld_width = (int *) emalloc(q->nflds*sizeof(int));
 	q->mtp       = (char **) emalloc(q->nflds*sizeof(char *));
 	q->stepnr    = (int *) emalloc(i*sizeof(int));
@@ -210,7 +210,7 @@ qrecv(Lextok *n, int full)
 					exit(0);
 				} /* else: non-blocking */
 				if (c == EOF) return 0;	/* no char available */
-				(void) setval(m->lft, c);
+				(void) setval(m->lft, intValue(c));
 			} else
 			{	fatal("invalid use of STDIN", (char *)0);
 			}
@@ -232,15 +232,15 @@ static int
 sa_snd(Queue *q, Lextok *n)	/* sorted asynchronous */
 {	Lextok *m;
 	int i, j, k;
-	int New, Old;
+	Value New, Old;
 
 	for (i = 0; i < q->qlen; i++)
 	for (j = 0, m = n->rgt; m && j < q->nflds; m = m->rgt, j++)
-	{	New = cast_val(q->fld_width[j], eval(m->lft), 0);
+	{	New = cast_val(q->fld_width[j], evalValue(m->lft), 0);
 		Old = q->contents[i*q->nflds+j];
-		if (New == Old)
+		if (areValuesEqual(New, Old))
 			continue;
-		if (New >  Old)
+		if (isLeftValueLarger(New, Old))
 			break;	/* inner loop */
 		goto found;	/* New < Old */
 	}
@@ -321,14 +321,14 @@ a_snd(Queue *q, Lextok *n)
 	q->stepnr[i/q->nflds] = depth;
 
 	for (m = n->rgt; m && j < q->nflds; m = m->rgt, j++)
-	{	int New = eval(m->lft);
+	{	Value New = evalValue(m->lft);
 		q->contents[i+j] = cast_val(q->fld_width[j], New, 0);
 
 		if (q->fld_width[i+j] == MTYPE)
 		{	mtype_ck(q->mtp[i+j], m->lft);	/* 6.4.8 */
 		}
 		if ((verbose&16) && depth >= jumpsteps)
-		{	sr_talk(n, New, "Send ", "->", j, q); /* XXX j was i+j in 6.4.8 */
+		{	sr_talk(n, getInt(New), "Send ", "->", j, q); /* XXX j was i+j in 6.4.8 */
 		}
 		typ_ck(q->fld_width[i+j], Sym_typ(m->lft), "send");
 	}
@@ -367,7 +367,7 @@ try_slot:
 		}
 
 		if (m->lft->ntyp == CONST
-		&&  q->contents[i*q->nflds+j] != m->lft->val)
+		&&  !isValueEqual(q->contents[i*q->nflds+j],m->lft->val))
 		{
 			if (n->val == 0		/* fifo recv */
 			||  n->val == 2		/* fifo poll */
@@ -383,7 +383,7 @@ try_slot:
 			if (fix->ntyp == ',')	/* new, usertype7 */
 			{	do {
 					assert(j < q->nflds);
-					if (q->contents[i*q->nflds+j] != eval(fix->lft))
+					if (!areValuesEqual(q->contents[i*q->nflds+j], evalValue(fix->lft)))
 					{	if (n->val == 0
 						||  n->val == 2
 						||  ++i >= q->qlen)
@@ -396,7 +396,7 @@ try_slot:
 				} while (fix && fix->ntyp == ',');
 				j--;
 			} else
-			{	if (q->contents[i*q->nflds+j] != eval(fix))
+			{	if (!areValuesEqual(q->contents[i*q->nflds+j], evalValue(fix)))
 				{	if (n->val == 0		/* fifo recv */
 					||  n->val == 2		/* fifo poll */
 					|| ++i >= q->qlen)	/* last slot */
@@ -428,7 +428,7 @@ try_slot:
 	{	if (columns && !full)	/* was columns == 1 */
 			continue;
 		if ((verbose&8) && !Rvous && depth >= jumpsteps)
-		{	sr_talk(n, q->contents[i*q->nflds+j],
+		{	sr_talk(n, getInt(q->contents[i*q->nflds+j]),
 			(full && n->val < 2)?"Recv ":"[Recv] ", "<-", j, q);
 		}
 		if (!full)
@@ -467,7 +467,7 @@ s_snd(Queue *q, Lextok *n)
 	int i, j = 0;	/* q field# */
 
 	for (m = n->rgt; m && j < q->nflds; m = m->rgt, j++)
-	{	q->contents[j] = cast_val(q->fld_width[j], eval(m->lft), 0);
+	{	q->contents[j] = cast_val(q->fld_width[j], evalValue(m->lft), 0);
 		typ_ck(q->fld_width[j], Sym_typ(m->lft), "rv-send");
 
 		if (q->fld_width[j] == MTYPE)
@@ -737,7 +737,7 @@ doq(Symbol *s, int n, RunList *r)
 	if (!s->val)	/* uninitialized queue */
 		return;
 	for (q = qtab; q; q = q->nxt)
-	if (q->qid == s->val[n])
+	if (q->qid == getInt(s->val[n]))
 	{	if (xspin > 0
 		&& (verbose&4)
 		&& q->setat < depth)
@@ -763,7 +763,7 @@ doq(Symbol *s, int n, RunList *r)
 			for (j = 0; j < q->nflds; j++)
 			{	if (j > 0) printf(",");
 				sr_mesg(stdout,
-					q->contents[k*q->nflds+j],
+					getInt(q->contents[k*q->nflds+j]),
 					q->fld_width[j] == MTYPE,
 					q->mtp[j]);
 			}

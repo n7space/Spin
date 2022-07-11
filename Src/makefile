@@ -32,7 +32,8 @@ INSTALL?=cp		# on linux: install -D
 SPIN_OS= spinlex.o sym.o vars.o main.o msc_tcl.o \
 	mesg.o flow.o sched.o run.o pangen1.o pangen2.o \
 	pangen3.o pangen4.o pangen5.o guided.o dstep.o \
-	structs.o pangen6.o pangen7.o reprosrc.o utils.o
+	structs.o pangen6.o pangen7.o reprosrc.o utils.o \
+	value.o
 
 TL_OS=	tl_parse.o tl_lex.o tl_main.o tl_trans.o tl_buchi.o \
 	tl_mem.o tl_rewrt.o tl_cache.o

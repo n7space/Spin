@@ -1308,6 +1308,7 @@ trapwonly(Lextok *n /* , char *unused */)
 	||  i == BIT
 	||  i == BYTE
 	||  i == SHORT
+	||  i == FLOAT
 	||  i == INT
 	||  i == UNSIGNED))
 	{	n->sym->hidden |= 128;	/* var is read at least once */

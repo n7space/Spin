@@ -612,7 +612,7 @@ doless:
 			fprintf(fd_th, "extern S_F_MAP src_file%d[];\n", p->tn);
 		fprintf(fd_th, "\n");
 
-		fprintf(fd_tc, "uchar reached%d[3];  /* np_ */\n", nrRdy);	
+		fprintf(fd_tc, "uchar reached%d[3];  /* np_ */\n", nrRdy);
 		fprintf(fd_tc, "uchar *loopstate%d;  /* np_ */\n", nrRdy);
 
 		fprintf(fd_tc, "struct {\n");
@@ -630,7 +630,7 @@ doless:
 		}
 		fprintf(fd_tc, "};\n\n");
 	} else
-	{	fprintf(fd_tc, "extern uchar reached%d[3];  /* np_ */\n", nrRdy);	
+	{	fprintf(fd_tc, "extern uchar reached%d[3];  /* np_ */\n", nrRdy);
 	}
 
 	gencodetable(fd_tc);	/* was th */
@@ -762,7 +762,7 @@ doless:
 	ntimes(fd_th, 0, 1, pan_par);	/* BFS_PAR */
 	fclose(fd_th);
 
-	fprintf(fd_tc, "\nTrans *t_id_lkup[%d];\n\n", globmax+1); 
+	fprintf(fd_tc, "\nTrans *t_id_lkup[%d];\n\n", globmax+1);
 
 	if (separate != 2)
 	{	fprintf(fd_tc, "\n#ifdef BFS_PAR\n\t#include \"pan.p\"\n#endif\n");
@@ -1230,7 +1230,7 @@ put_sub(Element *e, int Tt0, int Tt1)
 				fprintf(fd_tm, "+delta_m; delta_m = 0");
 			fprintf(fd_tm, "; goto P999;\n\n");
 		}
-	
+
 		fprintf(fd_tb, "\tcase %d: ", uniq-1);
 		fprintf(fd_tb, "// STATE %d\n", e->seqno);
 		fprintf(fd_tb, "\t\tsv_restor();\n");
@@ -1559,15 +1559,30 @@ doforward(FILE *tm_fd, Element *e)
 			} /* else fall through */
 		case 1:		/* dead after read -- add asgn of rval -- needs bup */
 			YZ[YZmax].sym = u->var;	/* store for pan.b */
+			const unsigned short variableType = getType(&YZ[YZmax]);
+			const int isFloat = variableType == FLOAT;
 			CnT[YZcnt]++;		/* this step added bups */
 			if (multi_oval)
 			{	check_needed();
-				fprintf(tm_fd, "(trpt+1)->bup.ovals[%d] = ",
-					multi_oval-1);
+				if (isFloat)
+					fprintf(tm_fd, "(trpt+1)->bup.ovals[%d] = *(int*)(void*)&(",
+						multi_oval-1);
+				else
+					fprintf(tm_fd, "(trpt+1)->bup.ovals[%d] = ",
+						multi_oval-1);
 				multi_oval++;
-			} else
-				fprintf(tm_fd, "(trpt+1)->bup.oval = ");
-			putname(tm_fd, "", &YZ[YZmax], 0, ";\n");
+			}
+			else
+			{
+				if (isFloat)
+					fprintf(tm_fd, "(trpt+1)->bup.oval = *(int*)(void*)&(");
+				else
+					fprintf(tm_fd, "(trpt+1)->bup.oval = ");
+			}
+			if (isFloat)
+				putname(tm_fd, "", &YZ[YZmax], 0, ");\n");
+			else
+				putname(tm_fd, "", &YZ[YZmax], 0, ";\n");
 			fprintf(tm_fd, "#ifdef HAS_CODE\n");
 			fprintf(tm_fd, "\t\tif (!readtrail)\n");
 			fprintf(tm_fd, "#endif\n\t\t\t");
@@ -1599,7 +1614,18 @@ dobackward(Element *e, int casenr)
 		if (YZmax < 0)
 			fatal("cannot happen, dobackward", (char *)0);
 		fprintf(fd_tb, ";\n\t/* %d */\t", YZmax);
-		putname(fd_tb, "", &YZ[YZmax], 0, " = trpt->bup.oval");
+		const unsigned short variableType = getType(&YZ[YZmax]);
+		const int isFloat = variableType == FLOAT;
+		if (isFloat)
+		{
+			putname(fd_tb, "*(int*)(void*)&(", &YZ[YZmax], 0, ") = trpt->bup.oval");
+		}
+		else
+		{
+			putname(fd_tb, "", &YZ[YZmax], 0, " = trpt->bup.oval");
+		}
+
+
 		if (multi_oval > 0)
 		{	multi_oval--;
 			fprintf(fd_tb, "s[%d]", multi_oval-1);
@@ -1908,7 +1934,7 @@ put_el(Element *e, int Tt0, int Tt1)
 	case '.':
 	case GOTO:
 	case BREAK:
-		putskip(e->seqno); 
+		putskip(e->seqno);
 		casenr = 1; /* standard goto */
 generic_case:	fprintf(fd_tt, "\ttrans[%d][%d]\t= ", Pid_nr, e->seqno);
 		fprintf(fd_tt, "settr(%d,%d,%d,%d,0,\"",
@@ -2077,7 +2103,7 @@ in_settr--;
 			||  e->n->ntyp == D_STEP
 			||  e->n->ntyp == NON_ATOMIC)
 				put_sub(e, Tt0, Tt1);
-			else 
+			else
 			{
 				if (0) printf("			put_el %d\n", e->seqno);
 				put_el(e, Tt0, Tt1);
@@ -2629,7 +2655,17 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		putname(fd, "\t\t\tsprintf(simvals, \"%%d!\", ", now->lft, m, ");\n");
 		_isok++;
 		for (v = now->rgt, i = 0; v; v = v->rgt, i++)
-		{	cat3("\t\tsprintf(simtmp, \"%%d\", ", v->lft, "); strcat(simvals, simtmp);");
+		{
+			const unsigned short variableType = getType(v->lft);
+			const int isFloat = variableType == FLOAT;
+			if (isFloat)
+			{
+				cat3("\t\tsprintf(simtmp, \"%%f\", ", v->lft, "); strcat(simvals, simtmp);");
+			}
+			else
+			{
+				cat3("\t\tsprintf(simtmp, \"%%d\", ", v->lft, "); strcat(simvals, simtmp);");
+			}
 			if (v->rgt)
 			fprintf(fd, "\t\tstrcat(simvals, \",\");\n");
 		}
@@ -2991,18 +3027,48 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		_isok++;
 		for (v = now->rgt, i = 0; v; v = v->rgt, i++)
 		{	if (v->lft->ntyp != EVAL)
-			{	cat3("\t\t\tsprintf(simtmp, \"%%d\", ", v->lft, "); strcat(simvals, simtmp);");
+			{
+				const unsigned short variableType = getType(v->lft);
+				const int isFloat = variableType == FLOAT;
+				if (isFloat)
+				{
+					cat3("\t\t\tsprintf(simtmp, \"%%f\", ", v->lft, "); strcat(simvals, simtmp);");
+				}
+				else
+				{
+					cat3("\t\t\tsprintf(simtmp, \"%%d\", ", v->lft, "); strcat(simvals, simtmp);");
+				}
 			} else
 			{	if (v->lft->lft->ntyp == ',')	/* usertype4 */
 				{	if (0) { dump_tree("4", v->lft->lft); }
 					Lextok *fix = v->lft->lft;
 					do { i++;
-					   cat3("\n\t\t\tsprintf(simtmp, \"%%d,\", ", fix->lft, "); strcat(simvals, simtmp);");
-					   fix = fix->rgt;
+						const unsigned short variableType = getType(fix->lft);
+						const int isFloat = variableType == FLOAT;
+						if (isFloat)
+						{
+							cat3("\n\t\t\tsprintf(simtmp, \"%%f,\", ", fix->lft, "); strcat(simvals, simtmp);");
+						}
+						else
+						{
+							cat3("\n\t\t\tsprintf(simtmp, \"%%d,\", ", fix->lft, "); strcat(simvals, simtmp);");
+						}
+					    fix = fix->rgt;
 					} while (fix && fix->ntyp == ',');
 				} else
-				{  cat3("\n\t\t\tsprintf(simtmp, \"%%d\", ", v->lft->lft, "); strcat(simvals, simtmp);");
-			}	}
+				{
+					const unsigned short variableType = getType(v->lft->lft);
+					const int isFloat = variableType == FLOAT;
+					if (isFloat)
+					{
+						cat3("\n\t\t\tsprintf(simtmp, \"%%f\", ", v->lft->lft, "); strcat(simvals, simtmp);");
+					}
+					else
+					{
+						cat3("\n\t\t\tsprintf(simtmp, \"%%d\", ", v->lft->lft, "); strcat(simvals, simtmp);");
+					}
+				}
+			}
 			if (v->rgt)
 			{	fprintf(fd, "\n\t\t\tstrcat(simvals, \",\");\n");
 		}	}
@@ -3101,7 +3167,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 					}
 				} else
 					fprintf(fd, ", 0, 0");
-			}	
+			}
 			for ( ; i < Mpars; i++)
 			{	fprintf(fd, ", 0, 0");
 			}
@@ -3145,16 +3211,47 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		_isok++;
 
 		if (!GenCode)
-		{	if (multi_oval)
+		{
+			int old_nocast = nocast;
+			nocast = 1;
+			const unsigned short variableType = getType(now->lft);
+			const int isFloat = variableType == FLOAT;
+			if (multi_oval)
 			{	char tempbuf[64];
 				check_needed();
-				sprintf(tempbuf, "(trpt+1)->bup.ovals[%d] = ",
-					multi_oval-1);
+				if (isFloat)
+				{
+					sprintf(tempbuf, "(trpt+1)->bup.ovals[%d] = *(int*)(void*)&(",
+						multi_oval-1);
+				}
+				else
+				{
+					sprintf(tempbuf, "(trpt+1)->bup.ovals[%d] = ",
+						multi_oval-1);
+				}
+
 				multi_oval++;
-				cat30(tempbuf, now->lft, ";\n\t\t");
+				if (isFloat)
+				{
+					cat30(tempbuf, now->lft, ");\n\t\t");
+				}
+				else
+				{
+					cat30(tempbuf, now->lft, ";\n\t\t");
+				}
 			} else
-			{	cat3("(trpt+1)->bup.oval = ", now->lft, ";\n\t\t");
-		}	}
+			{
+				if (isFloat)
+				{
+					cat3("(trpt+1)->bup.oval = *(int*)(void*)&(", now->lft, ");\n\t\t");
+				}
+				else
+				{
+					cat3("(trpt+1)->bup.oval = ", now->lft, ";\n\t\t");
+				}
+			}
+			nocast = old_nocast;
+		}
 		if (now->lft->sym
 		&&  now->lft->sym->type == PREDEF
 		&&  strcmp(now->lft->sym->name, "_") != 0
@@ -3362,7 +3459,7 @@ putname(FILE *fd, char *pre, Lextok *n, int m, char *suff) /* varref */
 	if (!terse && !s->owner && evalindex != 1)
 	{	if (old_priority_rules
 		&&  strcmp(s->name, "_priority") == 0)
-		{	fprintf(fd, "1");	
+		{	fprintf(fd, "1");
 			goto shortcut;
 		} else
 		{	if (s->context

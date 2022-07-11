@@ -9,6 +9,11 @@
 #ifndef SEEN_UTILS_H
 #define SEEN_UTILS_H
 
+typedef struct Lextok Lextok;
+
 int is_typedef(const unsigned short type);
+unsigned short getType(const Lextok *const token);
+void printLextok(const Lextok *const token);
+
 
 #endif

@@ -236,6 +236,7 @@ blip(int n, char *b)
 			case INT:	sprintf(mtxt, "int"); break;
 			case MTYPE:	sprintf(mtxt, "mtype"); break;
 			case SHORT:	sprintf(mtxt, "short"); break;
+			case FLOAT:	sprintf(mtxt, "float"); break;
 			case UNSIGNED:	sprintf(mtxt, "unsigned"); break;
 			default:	sprintf(mtxt, "<unknown type>"); break;
 			}
