@@ -51,7 +51,7 @@ extern int	implied_semis, ltl_mode, in_seq, par_cnt;
 
 short	has_stack = 0;
 int	lineno  = 1;
-int	scope_seq[128], scope_level = 0;
+int	scope_seq[256], scope_level = 0;
 char	CurScope[MAXSCOPESZ];
 char	yytext[2048];
 FILE	*yyin, *yyout;
@@ -1667,6 +1667,8 @@ not_expanded:
 	{	switch (c) {
 		case '-': c = follow('>', IMPLIES,    '-'); break;
 		case '[': c = follow(']', ALWAYS,     '['); break;
+		case '/': c = follow('\\', AND, '/'); break;
+		case '\\': c = follow('/', OR, '\\'); break;
 		case '<': c = follow('>', EVENTUALLY, '<');
 			  if (c == '<')
 			  {	c = Getchar();
@@ -1702,8 +1704,16 @@ not_expanded:
 	case '|': c = follow('|', OR, '|'); break;
 	case ';': c = SEMI; break;
 	case '.': c = follow('.', DOTDOT, '.'); break;
-	case '{': scope_seq[scope_level++]++; set_cur_scope(); break;
-	case '}': scope_level--; set_cur_scope(); break;
+	case '{':
+		assert(scope_level < sizeof(scope_seq)-1);
+		scope_seq[scope_level++]++;
+		set_cur_scope();
+		break;
+	case '}':
+		assert(scope_level > 0);
+		scope_level--;
+		set_cur_scope();
+		break;
 	default : break;
 	}
 	ValToken(0, c)

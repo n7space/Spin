@@ -407,7 +407,8 @@ osubt	: /* empty */		{ $$ = ZN; }
 	| ':' NAME		{ $$ = $2; }
 	;
 
-one_decl: vis TYPE osubt var_list { setptype($3, $4, $2->val, $1);
+one_decl: vis TYPE osubt var_list {
+				  setptype($3, $4, $2->val, $1);
 				  $4->val = $2->val;
 				  $$ = $4;
 				}
@@ -488,11 +489,17 @@ ivar    : vardcl           	{ $$ = $1;
 				  nochan_manip($1, $3, 0);
 				  no_internals($1);
 				  if (!initialization_ok)
-				  {	Lextok *zx = nn(ZN, NAME, ZN, ZN);
-					zx->sym = $1->sym;
-					add_seq(nn(zx, ASGN, zx, $3));
-					$1->sym->ini = 0;	/* Patrick Trentlin */
-				  }
+				  {	if ($1->sym->isarray)
+					{	fprintf(stderr, "warning: %s:%d initialization of %s[] ",
+							$1->fn->name, $1->ln,
+							$1->sym->name);
+						fprintf(stderr, "could fail if placed here\n");
+					} else
+					{	Lextok *zx = nn(ZN, NAME, ZN, ZN);
+						zx->sym = $1->sym;
+						add_seq(nn(zx, ASGN, zx, $3));
+						$1->sym->ini = 0;	/* Patrick Trentlin */
+				  }	}
 				}
 	| vardcl ASGN ch_init	{ $1->sym->ini = $3;	/* channel declaration */
 				  $$ = $1; has_ini = 1;
