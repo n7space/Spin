@@ -25,8 +25,8 @@ active proctype test() {
     rsub = a - b;
     rmul = a * b;
     rdiv = a / b;
-    assert(radd == 28);
-    assert(rsub == -4);
+    assert(radd == 28.0);
+    assert(rsub == -4.0);
     assert(rmul == 192);
     assert(rdiv > rdiv_lower);
     assert(rdiv < rdiv_upper);

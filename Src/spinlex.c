@@ -16,6 +16,7 @@
 #define MAXINL	16	/* max recursion depth inline fcts */
 #define MAXPAR	32	/* max params to an inline call */
 #define MAXLEN	512	/* max len of an actual parameter text */
+#define MAX_TOKEN_TEXT_LENGTH 2048	/* max len of an actual token text */
 
 typedef struct IType {
 	Symbol *nm;		/* name of the type */
@@ -53,7 +54,7 @@ short	has_stack = 0;
 int	lineno  = 1;
 int	scope_seq[256], scope_level = 0;
 char	CurScope[MAXSCOPESZ];
-char	yytext[2048];
+char	yytext[MAX_TOKEN_TEXT_LENGTH+1];
 FILE	*yyin, *yyout;
 
 static C_Added	*c_added, *c_tracked;
@@ -168,20 +169,34 @@ isdigit_(int c)
 {	return isdigit(c);	/* could be macro */
 }
 
+static int
+tryToAppendToTokenText(int character)
+{	fprintf(stdout, "Trying to append '%c'\n", (char) character);
+	int i= strlen(yytext);
+	if (i < MAX_TOKEN_TEXT_LENGTH && character != EOF)
+	{	yytext[i++] = (char) character;
+		yytext[i++] = '\0';
+		return 1;
+	}
+	else
+		return 0;
+}
+
 static void
 getword(int first, int (*tst)(int))
 {	int i=0, c;
 
 	yytext[i++]= (char) first;
-	while (tst(c = Getchar()))
+	while (i < MAX_TOKEN_TEXT_LENGTH && tst(c = Getchar()))
 	{	if (c == EOF)
 		{	break;
 		}
 		yytext[i++] = (char) c;
-		if (c == '\\')
+		if (c == '\\' && i < MAX_TOKEN_TEXT_LENGTH)
 		{	c = Getchar();
 			yytext[i++] = (char) c;	/* no tst */
-	}	}
+		}
+	}
 	yytext[i] = '\0';
 
 	Ungetch(c);
@@ -1577,13 +1592,39 @@ again:
 	if (isdigit_(c))
 	{	long int nr;
 		getword(c, isdigit_);
-		errno = 0;
-		nr = strtol(yytext, NULL, 10);
-		if (errno != 0)
-		{	fprintf(stderr, "spin: value out of range: '%s' read as '%d'\n",
-				yytext, (int) nr);
+		c=Getchar();
+		fprintf(stdout, "after getword: '%s' and c='%c'\n", yytext, c);
+		if (c != '.' && c != 'e' && c != 'E')
+		{	Ungetch(c);
+			errno = 0;
+			nr = strtol(yytext, NULL, 10);
+			if (errno != 0)
+			{	fprintf(stderr, "spin: value out of range: '%s' read as '%d'\n",
+					yytext, (int) nr);
+			}
+			ValToken((int)nr, CONST)
 		}
-		ValToken((int)nr, CONST)
+		else
+		{	if (c=='.' && tryToAppendToTokenText(c))
+			{	c=Getchar();
+				while(isdigit_(c) && tryToAppendToTokenText(c))
+				{	c=Getchar();
+				}
+				Ungetch(c);
+			}
+			
+			if ((c == 'e' || c == 'E') && tryToAppendToTokenText(c))
+			{	c=Getchar();
+				while(isdigit_(c) && tryToAppendToTokenText(c))
+				{	c=Getchar();
+				}
+				Ungetch(c);
+			}
+
+			float value = strtof(yytext, NULL);
+			int *asIntValue = (int*) &value;
+			ValToken(*(asIntValue), CONST);
+		}
 	}
 
 	if (isalpha_(c) || c == '_')
