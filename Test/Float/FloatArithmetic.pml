@@ -19,8 +19,8 @@ active proctype test() {
     float rdiv_lower;
     makeFloat(rdiv_lower, 74, 100);
     makeFloat(rdiv_upper, 76, 100);
-    a = 12;
-    b = 16;
+    a = 12.0;
+    b = 16.0;
     radd = a + b;
     rsub = a - b;
     rmul = a * b;
