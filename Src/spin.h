@@ -27,6 +27,7 @@ typedef struct Lextok {
 	unsigned short	ntyp;	/* node type */
 	short	ismtyp;		/* CONST derived from MTYP */
 	int	val;		/* value attribute */
+	ValueKind constValKind;
 	int	ln;		/* line number */
 	int	indstep;	/* part of d_step sequence */
 	int	uiid;		/* inline id, if non-zero */
