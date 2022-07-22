@@ -171,8 +171,7 @@ isdigit_(int c)
 
 static int
 tryToAppendToTokenText(int character)
-{	fprintf(stdout, "Trying to append '%c'\n", (char) character);
-	int i= strlen(yytext);
+{	int i= strlen(yytext);
 	if (i < MAX_TOKEN_TEXT_LENGTH && character != EOF)
 	{	yytext[i++] = (char) character;
 		yytext[i++] = '\0';
@@ -1593,7 +1592,6 @@ again:
 	{	long int nr;
 		getword(c, isdigit_);
 		c=Getchar();
-		fprintf(stdout, "after getword: '%s' and c='%c'\n", yytext, c);
 		if (c != '.' && c != 'e' && c != 'E')
 		{	Ungetch(c);
 			errno = 0;
