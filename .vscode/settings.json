@@ -13,7 +13,7 @@
         {
             "cwd": "/home/gawkowsk/spin/Spin/Src",
             "binaryPath": "/home/gawkowsk/spin/Spin/Src/spin",
-            "binaryArgs": []
+            "binaryArgs": ["${workspaceRoot}/Test/Float/FloatArithmetic.pml"]
         }
     ],
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
