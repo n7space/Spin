@@ -66,12 +66,12 @@ static int	IArgno = 0, Inlining = -1;
 static int	check_name(char *);
 static int	last_token = 0;
 
-#define FloatValConstToken(value, tokenType)	{ if (in_comment) goto again; \
+#define FloatValConstToken(value)	{ if (in_comment) goto again; \
 			yylval = nn(ZN,0,ZN,ZN); \
 			yylval->val = value; \
 			yylval->constValKind = VALUE_FLOAT; \
-			last_token = tokenType; \
-			return tokenType; \
+			last_token = CONST; \
+			return CONST; \
 			}
 
 #define ValToken(value, tokenType)	{ if (in_comment) goto again; \
@@ -1630,7 +1630,7 @@ again:
 
 			float value = strtof(yytext, NULL);
 			int *asIntValue = (int*) &value;
-			FloatValConstToken(*(asIntValue), CONST);
+			FloatValConstToken(*(asIntValue));
 		}
 	}
 

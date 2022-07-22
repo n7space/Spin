@@ -28,7 +28,7 @@ active proctype test() {
     rdiv = a / b;
     assert(radd == 28.0);
     assert(rsub == -4.0);
-    assert(rmul == 192);
+    assert(rmul == 192.0);
     assert(rdiv > rdiv_lower);
     assert(rdiv < rdiv_upper);
     printf("Float arithmetic: %f and %f == (+)%f (-)%f (*)%f (/)%f\n",
