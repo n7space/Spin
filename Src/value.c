@@ -1,6 +1,16 @@
 #include "value.h"
 
 int
+notEqual(const Value a, const Value b)
+{
+		if (a.kind == VALUE_INT && b.kind == VALUE_INT)
+			return a.value.intValue != b.value.intValue;
+		if (a.kind == VALUE_FLOAT && b.kind == VALUE_FLOAT)
+			return a.value.floatValue != a.value.floatValue;
+		return 1;
+}
+
+int
 isLeftValueLargerOrEqual(const Value a, const Value b)
 {
 	if ((a.kind == VALUE_INT) && (b.kind == VALUE_INT)) {
