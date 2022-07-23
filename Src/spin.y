@@ -526,6 +526,8 @@ ch_init : '[' const_expr ']' OF
 
 vardcl  : NAME  		{ $1->sym->nel = 1; $$ = $1; }
 	| NAME ':' CONST	{ $1->sym->nbits = $3->val;
+				  if ($3->constValKind == VALUE_FLOAT)
+				  	fatal("width-field %s cannot be specified with float constant", $1->sym->name);
 				  if ($3->val >= 8*sizeof(long))
 				  {	non_fatal("width-field %s too large",
 						$1->sym->name);
@@ -877,6 +879,7 @@ expr    : l_par expr r_par		{ $$ = $2; }
 				  $$->ismtyp = $1->ismtyp;
 				  $$->sym = $1->sym;
 				  $$->val = $1->val;
+				  $$->constValKind = $1->constValKind;
 				}
 	| TIMEOUT		{ $$ = nn(ZN,TIMEOUT, ZN, ZN); }
 	| NONPROGRESS		{ $$ = nn(ZN,NONPROGRESS, ZN, ZN);
@@ -1009,6 +1012,7 @@ rarg	: varref		{ $$ = $1; trackvar($1, $1);
 				  $$->ismtyp = $1->ismtyp;
 				  $$->sym = $1->sym;
 				  $$->val = $1->val;
+				  $$->constValKind = $1->constValKind;
 				}
 	| '-' CONST %prec UMIN	{ $$ = nn(ZN,CONST,ZN,ZN);
 				  $$->val = - ($2->val);

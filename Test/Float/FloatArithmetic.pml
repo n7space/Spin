@@ -20,7 +20,6 @@ active proctype test() {
     makeFloat(rdiv_lower, 74, 100);
     makeFloat(rdiv_upper, 76, 100);
     a = 12.0;
-    printf("a variable has value of %f", a);
     b = 16.0;
     radd = a + b;
     rsub = a - b;
