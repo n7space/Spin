@@ -10,7 +10,7 @@
 #define SEEN_VALUE_H
 
 /* Types of primitives held in Value type*/
-typedef enum {VALUE_FLOAT, VALUE_INT} ValueKind;
+typedef enum {VALUE_INT, VALUE_FLOAT} ValueKind;
 
 /* Variant type */
 typedef struct {

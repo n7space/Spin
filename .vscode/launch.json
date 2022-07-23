@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/Src/spin",
             "args": [
-                "${workspaceFolder}/Test/Float/FloatConsts.pml"
+                "${workspaceFolder}/Test/Out/loops.pml"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/Src",
