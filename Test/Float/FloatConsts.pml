@@ -3,6 +3,7 @@ active proctype test() {
     float b=12.0;
     float c;
     c = a + b;
+    printf("c variable has value of %f\n", c);
     assert(c == 15.0);
     printf("a variable has value of %f\n", a);
     printf("b variable has value of %f\n", b);
