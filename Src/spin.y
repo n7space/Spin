@@ -816,8 +816,8 @@ const_expr:	CONST			{ $$ = $1; }
 					  $$->val = $1->val / $3->val;
 					}
 	| const_expr '%' const_expr	{ $$ = $1;
-					  if ($3->val == 0)
-					  { fatal("attempt to take modulo of zero", (char *) 0);
+					  if ($3->constValKind == VALUE_FLOAT || $3->val == 0)
+					  { fatal("attempt to take modulo of zero or trying to compute modulo of float", (char *) 0);
 					  }
 					  $$->val = $1->val % $3->val;
 					}
