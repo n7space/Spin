@@ -20,7 +20,7 @@ active proctype test() {
     d.counter = 0;
     d.value = 0;
     makeFloat(f, 1, 10);
-    for (i : 1..101 ) {
+    for (i : 1 .. 101 ) {
         d.counter = d.counter + 1;
         d.value = d.value + f;
     }
