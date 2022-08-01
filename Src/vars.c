@@ -112,6 +112,7 @@ rm_selfrefs(Symbol *s, Lextok *i)
 		non_fatal("self-reference initializing '%s'", s->name);
 		i->ntyp = CONST;
 		i->val  = 0;
+		i->constValKind = VALUE_INT;
 	} else
 	{	rm_selfrefs(s, i->lft);
 		rm_selfrefs(s, i->rgt);

@@ -13,7 +13,7 @@
                 "-run",
                 "${workspaceFolder}/Test/Float/FloatConsts.pml"
             ],
-            "stopAtEntry": false,
+            "stopAtEntry": true,
             "cwd": "${workspaceFolder}/Src",
             "environment": [],
             "externalConsole": false,

@@ -159,7 +159,7 @@ trackvar(Lextok *n, Lextok *m)
 				sp->hidden |= 8;
 		}
 		break;
-	case CONST:
+	case CONST:		// TODO PG - varify for floats
 		if (m->val != 0 && m->val != 1)
 			sp->hidden |= 4;
 		if (m->val < 0 || m->val > 256)
@@ -189,7 +189,7 @@ checkrun(Symbol *parnm, int posno)
 			if (i == posno)
 			{	m = v->lft->ntyp;
 				if (m == CONST)
-				{	m = v->lft->val;
+				{	m = v->lft->val;	// TDO PG - verify for floats
 					if (m != 0 && m != 1)
 						res |= 4;
 					if (m < 0 || m > 256)
@@ -442,6 +442,7 @@ setmtype(Lextok *mtype_name, Lextok *m)
 			n->lft->sym->type = MTYPE;
 			n->lft->sym->ini = nn(ZN,CONST,ZN,ZN);
 			n->lft->sym->ini->val = cnt;
+			n->lft->sym->ini->constValKind = VALUE_INT;
 		} else if (n->lft->sym->ini->val != cnt)
 		{	non_fatal("name %s appears twice in mtype declaration",
 				n->lft->sym->name);

@@ -420,6 +420,7 @@ if (0) printf("pid %d cannot run: not provided\n", X_lst->pid);
 	if (has_priority && !old_priority_rules)
 	{	Lextok *n = nn(ZN, CONST, ZN, ZN);
 		n->val = X_lst->pid;
+		n->constValKind = VALUE_INT;
 if (0) printf("pid %d %s run (priority)\n", X_lst->pid, pc_highest(n)?"can":"cannot");
 		return pc_highest(n);
 	}

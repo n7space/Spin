@@ -550,6 +550,7 @@ Element *
 mk_skip(void)
 {	Lextok  *t = nn(ZN, CONST, ZN, ZN);
 	t->val = 1;
+	t->constValKind = VALUE_INT;
 	return new_el(nn(ZN, 'c', t, ZN));
 }
 
@@ -945,7 +946,7 @@ valid_name(Lextok *a3, Lextok *a5, Lextok *a8, char *tp)
 	||  a3->sym->isarray != 0)
 	{	fatal("bad index in for-construct %s", a3->sym->name);
 	}
-	if (a5->ntyp == CONST && a8->ntyp == CONST && a5->val > a8->val)
+	if (a5->ntyp == CONST && a8->ntyp == CONST && a5->val > a8->val)		// TODO: PG - validate CONST type? should be INT?
 	{	non_fatal("start value for %s exceeds end-value", a3->sym->name);
 	}
 }
@@ -993,12 +994,12 @@ for_index(Lextok *a3, Lextok *a5)
 		{	fatal("type of %s does not match chan", a3->sym->name);
 		}
 
-		z1 = nn(ZN, CONST, ZN, ZN); z1->val = 0;
+		z1 = nn(ZN, CONST, ZN, ZN); z1->val = 0; z1->constValKind = VALUE_INT;
 		z2 = nn(a5, LEN, a5, ZN);
 
 		sprintf(tmp_nm, "_f0r_t3mp%s", CurScope); /* make sure it's unique */
 		tmp_cnt = lookup(tmp_nm);
-		if (z0->val > 255)			/* check nr of slots, i.e. max length */
+		if (z0->val > 255)			/* check nr of slots, i.e. max length */	// TODO PG - validate type?
 		{	tmp_cnt->type = SHORT;	/* should be rare */
 		} else
 		{	tmp_cnt->type = BYTE;
@@ -1033,8 +1034,8 @@ for_index(Lextok *a3, Lextok *a5)
 		||  leaf->sym->nel <= 0)
 		{	fatal("bad arrayname %s", leaf->sym->name);
 		}
-		z1 = nn(ZN, CONST, ZN, ZN); z1->val = 0;
-		z2 = nn(ZN, CONST, ZN, ZN); z2->val = leaf->sym->nel - 1;
+		z1 = nn(ZN, CONST, ZN, ZN); z1->val = 0; z1->constValKind = VALUE_INT;
+		z2 = nn(ZN, CONST, ZN, ZN); z2->val = leaf->sym->nel - 1; z1->constValKind = VALUE_INT; // TODO PG - varify if it should be always INT
 		for_setup(a3, z1, z2);
 		return a3;
 	}
@@ -1044,7 +1045,7 @@ Lextok *
 for_body(Lextok *a3, int with_else)
 {	Lextok *t1, *t2, *t0, *rv;
 
-	rv = nn(ZN, CONST, ZN, ZN); rv->val = 1;
+	rv = nn(ZN, CONST, ZN, ZN); rv->val = 1; rv->constValKind = VALUE_INT;
 	rv = nn(ZN,  '+', a3, rv);
 	rv = nn(a3, ASGN, a3, rv);
 	add_seq(rv);	/* initial increment */

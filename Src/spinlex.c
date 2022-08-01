@@ -2034,7 +2034,7 @@ yylex(void)
 			assert(strlen(IArg_cont[IArgno])+strlen(yytext) < sizeof(IArg_cont));
 			strcat(IArg_cont[IArgno], yytext);
 		} else if (c == CONST)
-		{	sprintf(yytext, "%d", yylval->val);
+		{	yylval->constValKind == VALUE_FLOAT ? sprintf(yytext, "%f", *((float*)&(yylval->val))): sprintf(yytext, "%d", yylval->val);
 			assert(strlen(IArg_cont[IArgno])+strlen(yytext) < sizeof(IArg_cont));
 			strcat(IArg_cont[IArgno], yytext);
 		} else

@@ -366,6 +366,7 @@ cpnn(Lextok *s, int L, int R, int S)
 	d->uiid = s->uiid;
 	d->ntyp = s->ntyp;
 	d->val  = s->val;
+	d->constValKind = s->constValKind;
 	d->ln   = s->ln;
 	d->fn   = s->fn;
 	d->sym  = s->sym;
@@ -559,7 +560,7 @@ dump_struct(Symbol *z, char *prefix, RunList *r)
 					}
 
 					sr_mesg(stdout, getInt(tl->sym->val[jx]),
-						tl->sym->type == MTYPE, s);
+						tl->sym->type == MTYPE, s);		// TODO PG - handle floats in queues? structs?
 					printf("\n");
 		}	}	}
 	}
@@ -586,6 +587,7 @@ retrieve(Lextok **targ, int i, int want, Lextok *n, int Ntyp)
 				{	*targ = cpnn(tl, 1, 0, 0);
 					(*targ)->lft = nn(ZN, CONST, ZN, ZN);
 					(*targ)->lft->val = k;
+					(*targ)->lft->constValKind = VALUE_INT;
 					if (Ntyp)
 					(*targ)->ntyp = (short) Ntyp;
 					return -1;
