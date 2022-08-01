@@ -82,6 +82,14 @@ static int	last_token = 0;
 			return tokenType; \
 			}
 
+#define MakeIntConstValToken() {	errno = 0;	\
+			long nr = strtol(yytext, NULL, 10);	\
+			if (errno != 0)		\
+			{	fprintf(stderr, "spin: value out of range: '%s' read as '%d'\n",	\
+					yytext, (int) nr);	\
+			}	\
+			ValToken((int)nr, CONST)}
+
 #define SymToken(x, y)	{ if (in_comment) goto again; \
 			yylval = nn(ZN,0,ZN,ZN); \
 			yylval->sym = x; \
@@ -1598,33 +1606,37 @@ again:
 	}
 
 	if (isdigit_(c))
-	{	long int nr;
-		getword(c, isdigit_);
-		c=Getchar();
+	{	getword(c, isdigit_);
+		c = Getchar();
 		if (c != '.' && c != 'e' && c != 'E')
 		{	Ungetch(c);
-			errno = 0;
-			nr = strtol(yytext, NULL, 10);
-			if (errno != 0)
-			{	fprintf(stderr, "spin: value out of range: '%s' read as '%d'\n",
-					yytext, (int) nr);
-			}
-			ValToken((int)nr, CONST)
+			MakeIntConstValToken();
 		}
 		else
-		{	if (c=='.' && tryToAppendToTokenText(c))
-			{	c=Getchar();
-				while(isdigit_(c) && tryToAppendToTokenText(c))
-				{	c=Getchar();
+		{	if (c == '.')
+			{	c = Getchar();
+				if (c == '.')
+				{	Ungetch('.');
+					Ungetch('.');
+					MakeIntConstValToken();
 				}
-				Ungetch(c);
+				else
+				{	tryToAppendToTokenText('.');
+
+					while(isdigit_(c) && tryToAppendToTokenText(c))
+						c = Getchar();
+				
+					Ungetch(c);
+				}
 			}
 			
 			if ((c == 'e' || c == 'E') && tryToAppendToTokenText(c))
-			{	c=Getchar();
+			{	c = Getchar();
+				if (( c == '+' || c == '-' ) && tryToAppendToTokenText(c))
+					c = Getchar();
 				while(isdigit_(c) && tryToAppendToTokenText(c))
-				{	c=Getchar();
-				}
+					c = Getchar();
+
 				Ungetch(c);
 			}
 
