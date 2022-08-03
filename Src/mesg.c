@@ -966,7 +966,7 @@ scan_tree(Lextok *t, char *mn, char *mx)
 		}
 	} else if (t->ntyp == CONST)
 	{	strcat(mn, "1"); /* really: t->val */
-		t->constValKind == VALUE_INT ? sprintf(tmp, "%d", t->val): sprintf(tmp, "%f", *((float*)&(t->val)));
+		t->constValKind == VALUE_INT ? sprintf(tmp, "%d", t->val): sprintf(tmp, "%f", getFloatTokenValue(t));
 		strcat(mx, tmp);
 	} else if (t->ntyp == '.')
 	{	strcat(mn, ".");

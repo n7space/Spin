@@ -297,7 +297,7 @@ comwork(FILE *fd, Lextok *now, int m)
 			{	s = now->sym->mtype_name->name;
 			}
 			if (now->constValKind == VALUE_FLOAT)
-				sr_mesg_f(fd, *(float*)&(now->val), now->ismtyp, s);
+				sr_mesg_f(fd, getFloatTokenValue(now), now->ismtyp, s);
 			else
 				sr_mesg(fd, now->val, now->ismtyp, s);	// TODO PG - inside there is comparison of now->val to 1 and printf as int...
 			break;

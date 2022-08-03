@@ -2407,7 +2407,7 @@ dump_tree(const char *s, Lextok *p)
 	printf("\n%s:\t%2d:\t%3d (", s, p->ln, p->ntyp);
 	explain(p->ntyp);
 	if (p->ntyp == 315) printf(": %s", p->sym->name);
-	if (p->ntyp == CONST) p->constValKind == VALUE_FLOAT ? printf(": %f",*((float*)&(p->val))): printf(": %d", p->val);
+	if (p->ntyp == CONST) p->constValKind == VALUE_FLOAT ? printf(": %f", getFloatTokenValue(p)): printf(": %d", p->val);
 	printf(")");
 
 	if (p->lft) { sprintf(z, "%sL", s); dump_tree(z, p->lft); }
@@ -2424,7 +2424,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 	Fname  = now->fn;
 
 	switch (now->ntyp) {
-	case CONST:	now->constValKind == VALUE_FLOAT? fprintf(fd, "%f", *((float*)&(now->val))): fprintf(fd, "%d", now->val); break;
+	case CONST:	now->constValKind == VALUE_FLOAT? fprintf(fd, "%f", getFloatTokenValue(now)): fprintf(fd, "%d", now->val); break;
 	case '!':	cat3(" !(", now->lft, ")"); break;
 	case UMIN:	cat3(" -(", now->lft, ")"); break;
 	case '~':	cat3(" ~(", now->lft, ")"); break;

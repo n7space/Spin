@@ -428,7 +428,7 @@ evalValue(Lextok *now)
 	printf("\n");
 #endif
 	switch (now->ntyp) {
-	case CONST: return now->constValKind == VALUE_FLOAT? floatValue(*((float*)&(now->val))): intValue(now->val);
+	case CONST: return now->constValKind == VALUE_FLOAT? floatValue(getFloatTokenValue(now)): intValue(now->val);
 	case   '!': return intValue(!eval(now->lft));
 	case  UMIN: return intValue(-eval(now->lft));
 	case   '~': return intValue(~eval(now->lft));

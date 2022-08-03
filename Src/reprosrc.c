@@ -186,7 +186,7 @@ blip(int n, char *b)
 	case C_STATE:	sprintf(mtxt, "c_state"); break;
 	case C_TRACK:	sprintf(mtxt, "c_track"); break;
 	case CLAIM:	sprintf(mtxt, "never"); break;
-	case CONST:	yylval->constValKind == VALUE_FLOAT? sprintf(mtxt, "%f", *((float*)&(yylval->val))): sprintf(mtxt, "%d", yylval->val); break;
+	case CONST:	yylval->constValKind == VALUE_FLOAT? sprintf(mtxt, "%f", getFloatTokenValue(yylval)): sprintf(mtxt, "%d", yylval->val); break;
 	case DECR:	sprintf(mtxt, "--"); break;
 	case D_STEP:	sprintf(mtxt, "d_step"); break;
 	case D_PROCTYPE: sprintf(mtxt, "d_proctype"); break;
