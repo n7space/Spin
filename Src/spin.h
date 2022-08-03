@@ -317,8 +317,9 @@ int	eval(Lextok *);
 int	find_lab(Symbol *, Symbol *, int);
 int	find_maxel(Symbol *);
 int	full_name(FILE *, Lextok *, Symbol *, int);
-Value getlocal(Lextok *);
-Value getval(Lextok *);
+Value getlocal(Lextok *);	// TODO PG - actually it takes the value from the symbol in the token... rename
+Value getval(Lextok *);	// TODO PG - actually it takes the value from symbol associated by the token... should be renamed
+float getFloatTokenValue(const Lextok *);
 int	glob_inline(char *);
 int	has_typ(Lextok *, int);
 int	in_bound(Symbol *, int);

@@ -326,6 +326,11 @@ iseqname(char *t)
 	return 0;
 }
 
+float getFloatTokenValue(const Lextok * token)
+{
+	return *((float*)&(token->val));
+}
+
 Lextok *
 return_statement(Lextok *n)
 {
@@ -1625,8 +1630,6 @@ again:
 
 					while(isdigit_(c) && tryToAppendToTokenText(c))
 						c = Getchar();
-				
-					Ungetch(c);
 				}
 			}
 			
@@ -1637,8 +1640,9 @@ again:
 				while(isdigit_(c) && tryToAppendToTokenText(c))
 					c = Getchar();
 
-				Ungetch(c);
 			}
+
+			Ungetch(c);
 
 			float value = strtof(yytext, NULL);
 			int *asIntValue = (int*) &value;
@@ -2046,7 +2050,7 @@ yylex(void)
 			assert(strlen(IArg_cont[IArgno])+strlen(yytext) < sizeof(IArg_cont));
 			strcat(IArg_cont[IArgno], yytext);
 		} else if (c == CONST)
-		{	yylval->constValKind == VALUE_FLOAT ? sprintf(yytext, "%f", *((float*)&(yylval->val))): sprintf(yytext, "%d", yylval->val);
+		{	yylval->constValKind == VALUE_FLOAT ? sprintf(yytext, "%f", getFloatTokenValue(yylval)): sprintf(yytext, "%d", yylval->val);
 			assert(strlen(IArg_cont[IArgno])+strlen(yytext) < sizeof(IArg_cont));
 			strcat(IArg_cont[IArgno], yytext);
 		} else
