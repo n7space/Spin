@@ -42,6 +42,7 @@ BENCHMARK = \
 	benchmark_large_message
 
 FLOAT_TESTS = \
+	test_float_literal_values \
 	test_float_arithmetic \
 	test_float_in_struct
 
@@ -438,6 +439,32 @@ benchmark_large_message:
 
 
 #################################FLOAT#########################################
+
+#Test float literal values
+test_float_literal_values:
+	echo "Test float literal values"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatLiteralValues.pml > FloatLiteralValues.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_MODEL_DIR}/FloatLiteralValues.pml > FloatLiteralValues.sim.output
+	grep -q "State-vector 40 byte, depth reached 2, errors: 0" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "3 states, stored" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "0 states, matched" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "0 atomic steps" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "x = 123.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "y = 43.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "z = 56.099998" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "x = 56.130001" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "x = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "x = 52999999488.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "x = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "c variable has value of 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "a variable has value of 3.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "c variable has value of 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	${DELETE_TEST_DIR}
+
 
 #Test float arithmetic
 test_float_arithmetic:
