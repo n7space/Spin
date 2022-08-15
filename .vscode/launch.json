@@ -10,8 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/Src/spin",
             "args": [
-                "-run",
-                "${workspaceFolder}/Test/Float/FloatConsts.pml"
+                //"-run",
+                "${workspaceFolder}/Test/Float/FloatArithmeticOperators.pml"
             ],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}/Src",

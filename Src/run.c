@@ -359,6 +359,16 @@ nonprogress(void)	/* np_ */
 }
 
 static inline Value
+evalUnaryMinus(Lextok* token)
+{
+	const Value val = evalValue(token);
+	if (val.kind == VALUE_FLOAT)
+		return floatValue(-getFloat(val));
+	return intValue(-getInt(val));
+
+}
+
+static inline Value
 evalMul(Lextok* left, Lextok* right)
 {
 	const Value lvalue = evalValue(left);
@@ -430,7 +440,7 @@ evalValue(Lextok *now)
 	switch (now->ntyp) {
 	case CONST: return now->constValKind == VALUE_FLOAT? floatValue(getFloatTokenValue(now)): intValue(now->val);
 	case   '!': return intValue(!eval(now->lft));
-	case  UMIN: return intValue(-eval(now->lft));
+	case  UMIN: return evalUnaryMinus(now->lft);
 	case   '~': return intValue(~eval(now->lft));
 
 	case   '/': return evalDiv(now->lft, now->rgt);
