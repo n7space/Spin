@@ -463,8 +463,10 @@ evalValue(Lextok *now)
 		!isLeftValueLarger(evalValue(now->lft), evalValue(now->rgt)));
 	case    GE: return intValue(
 		isLeftValueLargerOrEqual(evalValue(now->lft), evalValue(now->rgt)));
-	case    NE: return intValue(eval(now->lft) != eval(now->rgt));
-	case    EQ: return intValue(eval(now->lft) == eval(now->rgt));
+	case    NE: return intValue(
+		!areValuesEqual(evalValue(now->lft), evalValue(now->rgt)));
+	case    EQ: return intValue(
+		areValuesEqual(evalValue(now->lft), evalValue(now->rgt)));
 	case    OR: return intValue(eval(now->lft) || eval(now->rgt));
 	case   AND: return intValue(eval(now->lft) && eval(now->rgt));
 	case LSHIFT: return intValue(eval(now->lft) << eval(now->rgt));
