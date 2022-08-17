@@ -11,6 +11,8 @@ inline makeFloat(f, nominator, denominator) {
 active proctype test() {
     float a = 14.25;
     float b = -a;
+    int c = 14;
+    assert(c != a);
     assert(b == -14.25);
     printf("Float arithmetic operators:\n a == %f, b == %f\n",
         a, b);
