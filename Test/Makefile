@@ -43,6 +43,7 @@ BENCHMARK = \
 
 FLOAT_TESTS = \
 	test_float_literal_values \
+	test_float_arithmetic_operators \
 	test_float_arithmetic \
 	test_float_in_struct
 
@@ -465,6 +466,18 @@ test_float_literal_values:
 	grep -q "c variable has value of 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
 	${DELETE_TEST_DIR}
 
+#Test float operators
+test_float_arithmetic_operators:
+	echo "Test float arithmetic operators"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatArithmeticOperators.pml > FloatArithmeticOperators.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_MODEL_DIR}/FloatArithmeticOperators.pml > FloatArithmeticOperators.sim.output
+	grep -q "State-vector 24 byte, depth reached 2, errors: 0" ${TEST_DIR}/FloatArithmeticOperators.output
+	grep -q "a == 14.250000" ${TEST_DIR}/FloatArithmeticOperators.sim.output	
+	grep -q "b == -14.250000" ${TEST_DIR}/FloatArithmeticOperators.sim.output	
+	${DELETE_TEST_DIR}
 
 #Test float arithmetic
 test_float_arithmetic:
