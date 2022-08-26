@@ -8,10 +8,8 @@ Src/y.tab.c
 Src/y.output
 Out/FloatArithmetic.output
 Src/gmon.out
-.vscode/targets.log
 Test/Out/FloatArithmetic.output
-.vscode/dryrun.log
-.vscode/configurationCache.log
+.vscode/
 .gitignore
 gmon.out
 spin.h.nvr
