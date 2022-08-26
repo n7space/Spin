@@ -14,7 +14,7 @@ active proctype test() {
     assert(a != b);
     assert(b == b);
     assert(a < 14.3);
-    assert(a > 14.0);
+    assert(a > 14.2);
     assert(a >= a);
     assert(a <= a);
 
