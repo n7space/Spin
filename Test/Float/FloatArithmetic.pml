@@ -1,4 +1,3 @@
-// This is needed because dot notation is not yet supported by the lexer
 hidden float tmpN;
 hidden float tmpD;
 
@@ -17,6 +16,7 @@ active proctype test() {
     float rmul;
     float rdiv_upper;
     float rdiv_lower;
+    // floats can be made in functions
     makeFloat(rdiv_lower, 74, 100);
     makeFloat(rdiv_upper, 76, 100);
     a = 12.0;

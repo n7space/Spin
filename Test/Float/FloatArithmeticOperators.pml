@@ -1,13 +1,3 @@
-// This is needed because dot notation is not yet supported by the lexer
-hidden float tmpN;
-hidden float tmpD;
-
-inline makeFloat(f, nominator, denominator) {
-    tmpN = nominator;
-    tmpD = denominator;
-    f = tmpN / tmpD;
-}
-
 active proctype test() {
     float a = 14.25;
     float b = -a;
@@ -50,6 +40,6 @@ active proctype test() {
     // int can be devided by float giving float
     assert(45 / 2.0 == 22.5);
 
-    printf("Float arithmetic operators:\n a == %f, b == %f\n",
+    printf("Negated %f == %f\n",
         a, b);
 }

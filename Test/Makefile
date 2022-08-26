@@ -454,16 +454,15 @@ test_float_literal_values:
 	grep -q "0 states, matched" ${TEST_DIR}/FloatLiteralValues.output
 	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/FloatLiteralValues.output
 	grep -q "0 atomic steps" ${TEST_DIR}/FloatLiteralValues.output
-	grep -q "x = 123.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "y = 43.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "z = 56.099998" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "x = 56.130001" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "x = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "x = 52999999488.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "x = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output
-	grep -q "c variable has value of 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
-	grep -q "a variable has value of 3.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
-	grep -q "c variable has value of 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "123 as float = 123.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "43. = 43.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "56.1 = 56.099998" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "56.13 = 56.130001" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "5.2e+1 = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "5.3e+10 = 52999999488.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "520e-1 = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "3.0e+1/10 + 12.0 - 0.01 = 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "3.0e+1 / 10 = 3.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
 	${DELETE_TEST_DIR}
 
 #Test float operators
@@ -475,8 +474,7 @@ test_float_arithmetic_operators:
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_MODEL_DIR}/FloatArithmeticOperators.pml > FloatArithmeticOperators.sim.output
 	grep -q "State-vector 24 byte, depth reached 2, errors: 0" ${TEST_DIR}/FloatArithmeticOperators.output
-	grep -q "a == 14.250000" ${TEST_DIR}/FloatArithmeticOperators.sim.output	
-	grep -q "b == -14.250000" ${TEST_DIR}/FloatArithmeticOperators.sim.output	
+	grep -q "Negated 14.250000 == -14.250000" ${TEST_DIR}/FloatArithmeticOperators.sim.output	
 	${DELETE_TEST_DIR}
 
 #Test float arithmetic
