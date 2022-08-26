@@ -198,7 +198,7 @@ complete_transition(Succ_List *sl, Guard *g)
 		{	continue;
 		} else if (w->t->ntyp == 'c'
 		&&  w->t->lft->ntyp == CONST
-		&& 	w->t->lft->constValKind == VALUE_INT	// TODO PG - verify if it could be float... and then what?
+		&&  w->t->lft->constValKind == VALUE_INT	// TODO PG - verify if it could be float... and then what?
 		&&  w->t->lft->val == 1)
 		{	continue; /* 'true' */
 		}
@@ -677,7 +677,7 @@ create_transition(OneState *s, SQueue *it)
 		}
 		if (t->ntyp == 'c'
 		&&  t->lft->ntyp == CONST
-		&&	t->lft->constValKind == VALUE_INT)	// TODO PG - could be float? and then what?
+		&&  t->lft->constValKind == VALUE_INT)	// TODO PG - could be float? and then what?
 		{	if (t->lft->val == 0)	/* i.e., false */
 			{	goto done;
 	}	}	}

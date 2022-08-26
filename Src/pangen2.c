@@ -2067,7 +2067,7 @@ in_settr--;
 
 				if (g->n->ntyp == 'c'
 				&&  g->n->lft->ntyp == CONST
-				&& 	g->n->lft->constValKind == VALUE_INT		// TODO PG - verify what to do if float
+				&&  g->n->lft->constValKind == VALUE_INT		// TODO PG - verify what to do if float
 				&&  g->n->lft->val == 0		/* 0 or false */
 				&& !g->esc)
 				{	fprintf(fd_tt, "#if 0\n\t/* dead link: */\n");
