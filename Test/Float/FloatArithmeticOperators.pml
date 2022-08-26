@@ -13,7 +13,7 @@ active proctype test() {
     // float var is properly compared to float
     assert(a != b);
     assert(b == b);
-    assert(a < 15.6);
+    assert(a < 14.3);
     assert(a > 14.0);
     assert(a >= a);
     assert(a <= a);
