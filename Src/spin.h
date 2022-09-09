@@ -26,8 +26,8 @@ enum btypes { NONE, N_CLAIM, I_PROC, A_PROC, P_PROC, E_TRACE, N_TRACE };
 typedef struct Lextok {
 	unsigned short	ntyp;	/* node type */
 	short	ismtyp;		/* CONST derived from MTYP */
-	int	val;		/* value attribute */
-	ValueKind constValKind;
+	int	val;		/* value attribute - in fact, a variant of float or int - type defined by constValKind */
+	ValueKind constValKind;	/* actual type of the val (value) attribute - int or float */
 	int	ln;		/* line number */
 	int	indstep;	/* part of d_step sequence */
 	int	uiid;		/* inline id, if non-zero */
