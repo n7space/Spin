@@ -1,12 +1,3 @@
-hidden float tmpN;
-hidden float tmpD;
-
-inline makeFloat(f, nominator, denominator) {
-    tmpN = nominator;
-    tmpD = denominator;
-    f = tmpN / tmpD;
-}
-
 active proctype test() {
     float a;
     float b;
@@ -16,9 +7,8 @@ active proctype test() {
     float rmul;
     float rdiv_upper;
     float rdiv_lower;
-    // floats can be made in functions
-    makeFloat(rdiv_lower, 74, 100);
-    makeFloat(rdiv_upper, 76, 100);
+    rdiv_lower = 0.74;
+    rdiv_upper = 0.76;
     a = 12.0;
     b = 16.0;
     radd = a + b;
