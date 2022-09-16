@@ -359,6 +359,16 @@ nonprogress(void)	/* np_ */
 }
 
 static inline Value
+evalUnaryMinus(Lextok* token)
+{
+	const Value val = evalValue(token);
+	if (val.kind == VALUE_FLOAT)
+		return floatValue(-getFloat(val));
+	return intValue(-getInt(val));
+
+}
+
+static inline Value
 evalMul(Lextok* left, Lextok* right)
 {
 	const Value lvalue = evalValue(left);
@@ -428,9 +438,9 @@ evalValue(Lextok *now)
 	printf("\n");
 #endif
 	switch (now->ntyp) {
-	case CONST: return intValue(now->val);
+	case CONST: return now->constValKind == VALUE_FLOAT? floatValue(getFloatTokenValue(now)): intValue(now->val);
 	case   '!': return intValue(!eval(now->lft));
-	case  UMIN: return intValue(-eval(now->lft));
+	case  UMIN: return evalUnaryMinus(now->lft);
 	case   '~': return intValue(~eval(now->lft));
 
 	case   '/': return evalDiv(now->lft, now->rgt);
@@ -453,8 +463,10 @@ evalValue(Lextok *now)
 		!isLeftValueLarger(evalValue(now->lft), evalValue(now->rgt)));
 	case    GE: return intValue(
 		isLeftValueLargerOrEqual(evalValue(now->lft), evalValue(now->rgt)));
-	case    NE: return intValue(eval(now->lft) != eval(now->rgt));
-	case    EQ: return intValue(eval(now->lft) == eval(now->rgt));
+	case    NE: return intValue(
+		!areValuesEqual(evalValue(now->lft), evalValue(now->rgt)));
+	case    EQ: return intValue(
+		areValuesEqual(evalValue(now->lft), evalValue(now->rgt)));
 	case    OR: return intValue(eval(now->lft) || eval(now->rgt));
 	case   AND: return intValue(eval(now->lft) && eval(now->rgt));
 	case LSHIFT: return intValue(eval(now->lft) << eval(now->rgt));

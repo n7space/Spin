@@ -367,7 +367,7 @@ try_slot:
 		}
 
 		if (m->lft->ntyp == CONST
-		&&  !isValueEqual(q->contents[i*q->nflds+j],m->lft->val))
+		&&  !isValueEqual(q->contents[i*q->nflds+j],m->lft->val))	// TODO PG - varify val is INT
 		{
 			if (n->val == 0		/* fifo recv */
 			||  n->val == 2		/* fifo poll */
@@ -699,6 +699,29 @@ sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
 }
 
 void
+sr_buf_f(float v, int j, const char *s)
+{	int cnt = 1; Lextok *n;
+	char lbuf[512];
+	Lextok *Mtype = ZN;
+
+	if (j)
+	{	Mtype = *find_mtype_list(s?s:"_unnamed_");
+	}
+	for (n = Mtype; n && j; n = n->rgt, cnt++)
+	{	if (cnt == v)
+		{	if(strlen(n->lft->sym->name) >= sizeof(lbuf))
+			{	non_fatal("mtype name %s too long", n->lft->sym->name);
+				break;
+			}
+			sprintf(lbuf, "%s", n->lft->sym->name);
+			strcat(GBuf, lbuf);
+			return;
+	}	}
+	sprintf(lbuf, "%f", v);
+	strcat(GBuf, lbuf);
+}
+
+void
 sr_buf(int v, int j, const char *s)
 {	int cnt = 1; Lextok *n;
 	char lbuf[512];
@@ -719,6 +742,14 @@ sr_buf(int v, int j, const char *s)
 	}	}
 	sprintf(lbuf, "%d", v);
 	strcat(GBuf, lbuf);
+}
+
+void
+sr_mesg_f(FILE *fd, float v, int j, const char *s)
+{	GBuf[0] ='\0';
+
+	sr_buf_f(v, j, s);
+	fprintf(fd, GBuf, (char *) 0); /* prevent compiler warning */
 }
 
 void
@@ -763,7 +794,7 @@ doq(Symbol *s, int n, RunList *r)
 			for (j = 0; j < q->nflds; j++)
 			{	if (j > 0) printf(",");
 				sr_mesg(stdout,
-					getInt(q->contents[k*q->nflds+j]),
+					getInt(q->contents[k*q->nflds+j]),	// TODO PG - handle float in queues?
 					q->fld_width[j] == MTYPE,
 					q->mtp[j]);
 			}
@@ -935,7 +966,7 @@ scan_tree(Lextok *t, char *mn, char *mx)
 		}
 	} else if (t->ntyp == CONST)
 	{	strcat(mn, "1"); /* really: t->val */
-		sprintf(tmp, "%d", t->val);
+		t->constValKind == VALUE_INT ? sprintf(tmp, "%d", t->val): sprintf(tmp, "%f", getFloatTokenValue(t));
 		strcat(mx, tmp);
 	} else if (t->ntyp == '.')
 	{	strcat(mn, ".");

@@ -193,10 +193,12 @@ complete_transition(Succ_List *sl, Guard *g)
 	printf("	:: ");
 	for (w = g; w; w = w->nxt)
 	{	if (w->t->ntyp == CONST
+		&&  w->t->constValKind == VALUE_INT	// TODO PG - verify if it could be float...
 		&&  w->t->val == 1)
 		{	continue;
 		} else if (w->t->ntyp == 'c'
 		&&  w->t->lft->ntyp == CONST
+		&&  w->t->lft->constValKind == VALUE_INT	// TODO PG - verify if it could be float... and then what?
 		&&  w->t->lft->val == 1)
 		{	continue; /* 'true' */
 		}
@@ -674,7 +676,8 @@ create_transition(OneState *s, SQueue *it)
 		{	wrap_text("", t, " ");
 		}
 		if (t->ntyp == 'c'
-		&&  t->lft->ntyp == CONST)
+		&&  t->lft->ntyp == CONST
+		&&  t->lft->constValKind == VALUE_INT)	// TODO PG - could be float? and then what?
 		{	if (t->lft->val == 0)	/* i.e., false */
 			{	goto done;
 	}	}	}
@@ -831,6 +834,7 @@ set_el(int n, Element *e)
 	if (e->n->ntyp == '@')	/* change to self-loop */
 	{	e->n->ntyp = CONST;
 		e->n->val = 1;	/* true */
+		e->n->constValKind = VALUE_INT;
 		e->nxt = e;
 		g = e;
 		mk_accepting(n, e);
@@ -881,10 +885,12 @@ get_seq(int n, Sequence *s)
 				}
 
 				if (t->lft->ntyp == CONST	/* true */
+				&& t->lft->constValKind == VALUE_INT	// TODO PG - could be float? what then?
 				&&  t->lft->val == 1
 				&&  y == NULL)
 				{	y = nn(ZN, CONST, ZN, ZN);
 					y->val = 0;
+					y->constValKind = VALUE_INT;
 				} else
 				{	if (!x)
 						x = t;

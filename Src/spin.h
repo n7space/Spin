@@ -26,7 +26,8 @@ enum btypes { NONE, N_CLAIM, I_PROC, A_PROC, P_PROC, E_TRACE, N_TRACE };
 typedef struct Lextok {
 	unsigned short	ntyp;	/* node type */
 	short	ismtyp;		/* CONST derived from MTYP */
-	int	val;		/* value attribute */
+	int	val;		/* value attribute - in fact, a variant of float or int - type defined by constValKind */
+	ValueKind constValKind;	/* actual type of the val (value) attribute - int or float */
 	int	ln;		/* line number */
 	int	indstep;	/* part of d_step sequence */
 	int	uiid;		/* inline id, if non-zero */
@@ -303,7 +304,7 @@ long	Rand(void);
 int	any_oper(Lextok *, int);
 int	any_undo(Lextok *);
 int	c_add_sv(FILE *);
-Value cast_val(int, Value, int);
+Value	cast_val(int, Value, int);
 int	checkvar(Symbol *, int);
 int	check_track(Lextok *);
 int	Cnt_flds(Lextok *);
@@ -311,13 +312,14 @@ int	cnt_mpars(Lextok *);
 int	complete_rendez(void);
 int	enable(Lextok *);
 int	Enabled0(Element *);
-Value evalValue(Lextok *);
+Value	evalValue(Lextok *);
 int	eval(Lextok *);
 int	find_lab(Symbol *, Symbol *, int);
 int	find_maxel(Symbol *);
 int	full_name(FILE *, Lextok *, Symbol *, int);
-Value getlocal(Lextok *);
-Value getval(Lextok *);
+Value	getlocal(Lextok *);	// TODO PG - actually it takes the value from the symbol in the token... rename
+Value	getval(Lextok *);	// TODO PG - actually it takes the value from symbol associated by the token... should be renamed
+float	getFloatTokenValue(const Lextok *);
 int	glob_inline(char *);
 int	has_typ(Lextok *, int);
 int	in_bound(Symbol *, int);
@@ -327,7 +329,7 @@ int	is_inline(void);
 int	ismtype(char *);
 int	isproctype(char *);
 int	isutype(char *);
-Value Lval_struct(Lextok *, Symbol *, int, Value);
+Value	Lval_struct(Lextok *, Symbol *, int, Value);
 int	main(int, char **);
 int	pc_value(Lextok *);
 int	pid_is_claim(int);
@@ -340,8 +342,8 @@ int	qmake(Symbol *);
 int	qrecv(Lextok *, int);
 int	qsend(Lextok *);
 int	remotelab(Lextok *);
-Value remotevar(Lextok *);
-Value Rval_struct(Lextok *, Symbol *, int);
+Value	remotevar(Lextok *);
+Value	Rval_struct(Lextok *, Symbol *, int);
 int	setlocal(Lextok *, Value);
 int setval(Lextok *, Value);
 int	sputtype(char *, int);

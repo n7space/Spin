@@ -6,3 +6,12 @@ Src/spin
 Src/y.tab.h
 Src/y.tab.c
 Src/y.output
+Out/FloatArithmetic.output
+Src/gmon.out
+Test/Out/FloatArithmetic.output
+.vscode/
+.gitignore
+gmon.out
+spin.h.nvr
+Test/Out/FloatArithmetic.sim.output
+Src/pan

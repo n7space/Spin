@@ -9,8 +9,8 @@
 #ifndef SEEN_VALUE_H
 #define SEEN_VALUE_H
 
-/* Types of primitives held in Value type*/
-typedef enum {VALUE_FLOAT, VALUE_INT} ValueKind;
+/* Types of primitives held in Value type - test_loops fails if in other sequence - TODO - verify why */
+typedef enum {VALUE_INT, VALUE_FLOAT} ValueKind;
 
 /* Variant type */
 typedef struct {

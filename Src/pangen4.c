@@ -66,7 +66,7 @@ undostmnt(Lextok *now, int m)
 			if (v->lft->ntyp != CONST
 			&&  v->lft->ntyp != EVAL)
 				j++;
-		if (j == 0 && now->val >= 2)
+		if (j == 0 && now->val >= 2)		// TODO PG - verify if now->val could be float here
 			break;	/* poll without side-effect */
 
 		{	int ii = 0, jj;
@@ -75,7 +75,7 @@ undostmnt(Lextok *now, int m)
 				if ((v->lft->ntyp != CONST
 				&&   v->lft->ntyp != EVAL))
 					ii++;	/* nr of things bupped */
-			if (now->val == 1)
+			if (now->val == 1)		// TODO PG - verify if now->val could be float here
 			{	ii++;
 				jj = multi_oval - ii - 1;
 				fprintf(fd_tb, "XX = trpt->bup.oval");

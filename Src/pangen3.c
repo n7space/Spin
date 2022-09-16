@@ -28,7 +28,7 @@ static SRC	*frst = (SRC *) 0;
 static SRC	*skip = (SRC *) 0;
 
 extern int	ltl_mode;
-
+extern void sr_mesg_f(FILE *, float, int, const char *);
 extern void	sr_mesg(FILE *, int, int, const char *);
 extern Lextok	**find_mtype_list(const char *);
 
@@ -296,7 +296,10 @@ comwork(FILE *fd, Lextok *now, int m)
 			&&  now->sym->mtype_name)
 			{	s = now->sym->mtype_name->name;
 			}
-			sr_mesg(fd, now->val, now->ismtyp, s);
+			if (now->constValKind == VALUE_FLOAT)
+				sr_mesg_f(fd, getFloatTokenValue(now), now->ismtyp, s);
+			else
+				sr_mesg(fd, now->val, now->ismtyp, s);	// TODO PG - inside there is comparison of now->val to 1 and printf as int...
 			break;
 
 	case '!':	Cat3("!(", now->lft, ")"); break;

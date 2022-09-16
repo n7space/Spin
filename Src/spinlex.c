@@ -16,6 +16,7 @@
 #define MAXINL	16	/* max recursion depth inline fcts */
 #define MAXPAR	32	/* max params to an inline call */
 #define MAXLEN	512	/* max len of an actual parameter text */
+#define MAX_TOKEN_TEXT_LENGTH 2048	/* max len of an actual token text */
 
 typedef struct IType {
 	Symbol *nm;		/* name of the type */
@@ -51,9 +52,9 @@ extern int	implied_semis, ltl_mode, in_seq, par_cnt;
 
 short	has_stack = 0;
 int	lineno  = 1;
-int	scope_seq[128], scope_level = 0;
+int	scope_seq[256], scope_level = 0;
 char	CurScope[MAXSCOPESZ];
-char	yytext[2048];
+char	yytext[MAX_TOKEN_TEXT_LENGTH+1];
 FILE	*yyin, *yyout;
 
 static C_Added	*c_added, *c_tracked;
@@ -65,12 +66,29 @@ static int	IArgno = 0, Inlining = -1;
 static int	check_name(char *);
 static int	last_token = 0;
 
-#define ValToken(x, y)	{ if (in_comment) goto again; \
+#define FloatValConstToken(value)	{ if (in_comment) goto again; \
 			yylval = nn(ZN,0,ZN,ZN); \
-			yylval->val = x; \
-			last_token = y; \
-			return y; \
+			yylval->val = value; \
+			yylval->constValKind = VALUE_FLOAT; \
+			last_token = CONST; \
+			return CONST; \
 			}
+
+#define ValToken(value, tokenType)	{ if (in_comment) goto again; \
+			yylval = nn(ZN,0,ZN,ZN); \
+			yylval->val = value; \
+			yylval->constValKind = VALUE_INT; \
+			last_token = tokenType; \
+			return tokenType; \
+			}
+
+#define MakeIntConstValToken() {	errno = 0;	\
+			long nr = strtol(yytext, NULL, 10);	\
+			if (errno != 0)		\
+			{	fprintf(stderr, "spin: value out of range: '%s' read as '%d'\n",	\
+					yytext, (int) nr);	\
+			}	\
+			ValToken((int)nr, CONST)}
 
 #define SymToken(x, y)	{ if (in_comment) goto again; \
 			yylval = nn(ZN,0,ZN,ZN); \
@@ -168,20 +186,33 @@ isdigit_(int c)
 {	return isdigit(c);	/* could be macro */
 }
 
+static int
+tryToAppendToTokenText(int character)
+{	int i= strlen(yytext);
+	if (i < MAX_TOKEN_TEXT_LENGTH && character != EOF)
+	{	yytext[i++] = (char) character;
+		yytext[i++] = '\0';
+		return 1;
+	}
+	else
+		return 0;
+}
+
 static void
 getword(int first, int (*tst)(int))
 {	int i=0, c;
 
 	yytext[i++]= (char) first;
-	while (tst(c = Getchar()))
+	while (i < MAX_TOKEN_TEXT_LENGTH && tst(c = Getchar()))
 	{	if (c == EOF)
 		{	break;
 		}
 		yytext[i++] = (char) c;
-		if (c == '\\')
+		if (c == '\\' && i < MAX_TOKEN_TEXT_LENGTH)
 		{	c = Getchar();
 			yytext[i++] = (char) c;	/* no tst */
-	}	}
+		}
+	}
 	yytext[i] = '\0';
 
 	Ungetch(c);
@@ -293,6 +324,11 @@ iseqname(char *t)
 			return 1;
 	}
 	return 0;
+}
+
+float getFloatTokenValue(const Lextok * token)
+{
+	return *((float*)&(token->val));
 }
 
 Lextok *
@@ -1575,15 +1611,43 @@ again:
 	}
 
 	if (isdigit_(c))
-	{	long int nr;
-		getword(c, isdigit_);
-		errno = 0;
-		nr = strtol(yytext, NULL, 10);
-		if (errno != 0)
-		{	fprintf(stderr, "spin: value out of range: '%s' read as '%d'\n",
-				yytext, (int) nr);
+	{	getword(c, isdigit_);
+		c = Getchar();
+		if (c != '.' && c != 'e' && c != 'E')
+		{	Ungetch(c);
+			MakeIntConstValToken();
 		}
-		ValToken((int)nr, CONST)
+		else
+		{	if (c == '.')
+			{	c = Getchar();
+				if (c == '.')
+				{	Ungetch('.');
+					Ungetch('.');
+					MakeIntConstValToken();
+				}
+				else
+				{	tryToAppendToTokenText('.');
+
+					while(isdigit_(c) && tryToAppendToTokenText(c))
+						c = Getchar();
+				}
+			}
+			
+			if ((c == 'e' || c == 'E') && tryToAppendToTokenText(c))
+			{	c = Getchar();
+				if (( c == '+' || c == '-' ) && tryToAppendToTokenText(c))
+					c = Getchar();
+				while(isdigit_(c) && tryToAppendToTokenText(c))
+					c = Getchar();
+
+			}
+
+			Ungetch(c);
+
+			float value = strtof(yytext, NULL);
+			int *asIntValue = (int*) &value;
+			FloatValConstToken(*(asIntValue));
+		}
 	}
 
 	if (isalpha_(c) || c == '_')
@@ -1667,6 +1731,8 @@ not_expanded:
 	{	switch (c) {
 		case '-': c = follow('>', IMPLIES,    '-'); break;
 		case '[': c = follow(']', ALWAYS,     '['); break;
+		case '/': c = follow('\\', AND, '/'); break;
+		case '\\': c = follow('/', OR, '\\'); break;
 		case '<': c = follow('>', EVENTUALLY, '<');
 			  if (c == '<')
 			  {	c = Getchar();
@@ -1702,8 +1768,16 @@ not_expanded:
 	case '|': c = follow('|', OR, '|'); break;
 	case ';': c = SEMI; break;
 	case '.': c = follow('.', DOTDOT, '.'); break;
-	case '{': scope_seq[scope_level++]++; set_cur_scope(); break;
-	case '}': scope_level--; set_cur_scope(); break;
+	case '{':
+		assert(scope_level < sizeof(scope_seq)-1);
+		scope_seq[scope_level++]++;
+		set_cur_scope();
+		break;
+	case '}':
+		assert(scope_level > 0);
+		scope_level--;
+		set_cur_scope();
+		break;
 	default : break;
 	}
 	ValToken(0, c)
@@ -1976,7 +2050,7 @@ yylex(void)
 			assert(strlen(IArg_cont[IArgno])+strlen(yytext) < sizeof(IArg_cont));
 			strcat(IArg_cont[IArgno], yytext);
 		} else if (c == CONST)
-		{	sprintf(yytext, "%d", yylval->val);
+		{	yylval->constValKind == VALUE_FLOAT ? sprintf(yytext, "%f", getFloatTokenValue(yylval)): sprintf(yytext, "%d", yylval->val);
 			assert(strlen(IArg_cont[IArgno])+strlen(yytext) < sizeof(IArg_cont));
 			strcat(IArg_cont[IArgno], yytext);
 		} else

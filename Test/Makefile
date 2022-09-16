@@ -42,6 +42,8 @@ BENCHMARK = \
 	benchmark_large_message
 
 FLOAT_TESTS = \
+	test_float_literal_values \
+	test_float_arithmetic_operators \
 	test_float_arithmetic \
 	test_float_in_struct
 
@@ -439,6 +441,42 @@ benchmark_large_message:
 
 #################################FLOAT#########################################
 
+#Test float literal values
+test_float_literal_values:
+	echo "Test float literal values"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatLiteralValues.pml > FloatLiteralValues.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_MODEL_DIR}/FloatLiteralValues.pml > FloatLiteralValues.sim.output
+	grep -q "State-vector 40 byte, depth reached 2, errors: 0" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "3 states, stored" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "0 states, matched" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "0 atomic steps" ${TEST_DIR}/FloatLiteralValues.output
+	grep -q "123 as float = 123.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "43. = 43.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "56.1 = 56.099998" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "56.13 = 56.130001" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "5.2e+1 = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "5.3e+10 = 52999999488.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	grep -q "520e-1 = 52.000000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "3.0e+1/10 + 12.0 - 0.01 = 14.990000" ${TEST_DIR}/FloatLiteralValues.sim.output
+	grep -q "3.0e+1 / 10 = 3.000000" ${TEST_DIR}/FloatLiteralValues.sim.output	
+	${DELETE_TEST_DIR}
+
+#Test float operators
+test_float_arithmetic_operators:
+	echo "Test float arithmetic operators"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatArithmeticOperators.pml > FloatArithmeticOperators.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_MODEL_DIR}/FloatArithmeticOperators.pml > FloatArithmeticOperators.sim.output
+	grep -q "State-vector 24 byte, depth reached 2, errors: 0" ${TEST_DIR}/FloatArithmeticOperators.output
+	grep -q "Negated 14.250000 == -14.250000" ${TEST_DIR}/FloatArithmeticOperators.sim.output	
+	${DELETE_TEST_DIR}
+
 #Test float arithmetic
 test_float_arithmetic:
 	echo "Test float arithmetic"
@@ -447,10 +485,10 @@ test_float_arithmetic:
 	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatArithmetic.pml > FloatArithmetic.output
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_MODEL_DIR}/FloatArithmetic.pml > FloatArithmetic.sim.output
-	grep -q "State-vector 44 byte, depth reached 8, errors: 0" ${TEST_DIR}/FloatArithmetic.output
-	grep -q "9 states, stored" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "State-vector 44 byte, depth reached 2, errors: 0" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "3 states, stored" ${TEST_DIR}/FloatArithmetic.output
 	grep -q "0 states, matched" ${TEST_DIR}/FloatArithmetic.output
-	grep -q "9 transitions (= stored+matched)" ${TEST_DIR}/FloatArithmetic.output
+	grep -q "3 transitions (= stored+matched)" ${TEST_DIR}/FloatArithmetic.output
 	grep -q "0 atomic steps" ${TEST_DIR}/FloatArithmetic.output
 	grep -q "(+)28.00" ${TEST_DIR}/FloatArithmetic.sim.output	
 	grep -q "(-)-4.00" ${TEST_DIR}/FloatArithmetic.sim.output	
@@ -466,10 +504,10 @@ test_float_in_struct:
 	${SPIN} -run ${FLOAT_MODEL_DIR}/FloatInStruct.pml > FloatInStruct.output
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_MODEL_DIR}/FloatInStruct.pml > FloatInStruct.sim.output
-	grep -q "State-vector 28 byte, depth reached 109, errors: 0" ${TEST_DIR}/FloatInStruct.output
-	grep -q "110 states, stored" ${TEST_DIR}/FloatInStruct.output
+	grep -q "State-vector 28 byte, depth reached 105, errors: 0" ${TEST_DIR}/FloatInStruct.output
+	grep -q "106 states, stored" ${TEST_DIR}/FloatInStruct.output
 	grep -q "0 states, matched" ${TEST_DIR}/FloatInStruct.output
-	grep -q "110 transitions (= stored+matched)" ${TEST_DIR}/FloatInStruct.output
+	grep -q "106 transitions (= stored+matched)" ${TEST_DIR}/FloatInStruct.output
 	grep -q "0 atomic steps" ${TEST_DIR}/FloatInStruct.output
 	grep -q "Data is 101 and 10.10" ${TEST_DIR}/FloatInStruct.sim.output		
 	${DELETE_TEST_DIR}

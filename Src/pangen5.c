@@ -103,7 +103,7 @@ good_dead(Element *e, FSM_use *u)
 	switch (u->special) {
 	case 2:	/* ok if it's a receive */
 		if (e->n->ntyp == ASGN
-		&&  e->n->rgt->ntyp == CONST
+		&&  e->n->rgt->ntyp == CONST	// TODO PG - verify if it could be float
 		&&  e->n->rgt->val == 0)
 			return 0;
 		break;
@@ -831,7 +831,7 @@ ana_seq(Sequence *s)
 
 				if (g->n->ntyp != 'c'
 				||  g->n->lft->ntyp != CONST
-				||  g->n->lft->val != 0
+				||  g->n->lft->val != 0		// TODO PG - verify if it could be float
 				||  g->esc)
 					FSM_EDGE(From, To, e);
 				/* else it's a dead link */

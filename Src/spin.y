@@ -407,7 +407,8 @@ osubt	: /* empty */		{ $$ = ZN; }
 	| ':' NAME		{ $$ = $2; }
 	;
 
-one_decl: vis TYPE osubt var_list { setptype($3, $4, $2->val, $1);
+one_decl: vis TYPE osubt var_list {
+				  setptype($3, $4, $2->val, $1);
 				  $4->val = $2->val;
 				  $$ = $4;
 				}
@@ -488,11 +489,17 @@ ivar    : vardcl           	{ $$ = $1;
 				  nochan_manip($1, $3, 0);
 				  no_internals($1);
 				  if (!initialization_ok)
-				  {	Lextok *zx = nn(ZN, NAME, ZN, ZN);
-					zx->sym = $1->sym;
-					add_seq(nn(zx, ASGN, zx, $3));
-					$1->sym->ini = 0;	/* Patrick Trentlin */
-				  }
+				  {	if ($1->sym->isarray)
+					{	fprintf(stderr, "warning: %s:%d initialization of %s[] ",
+							$1->fn->name, $1->ln,
+							$1->sym->name);
+						fprintf(stderr, "could fail if placed here\n");
+					} else
+					{	Lextok *zx = nn(ZN, NAME, ZN, ZN);
+						zx->sym = $1->sym;
+						add_seq(nn(zx, ASGN, zx, $3));
+						$1->sym->ini = 0;	/* Patrick Trentlin */
+				  }	}
 				}
 	| vardcl ASGN ch_init	{ $1->sym->ini = $3;	/* channel declaration */
 				  $$ = $1; has_ini = 1;
@@ -519,6 +526,8 @@ ch_init : '[' const_expr ']' OF
 
 vardcl  : NAME  		{ $1->sym->nel = 1; $$ = $1; }
 	| NAME ':' CONST	{ $1->sym->nbits = $3->val;
+				  if ($3->constValKind == VALUE_FLOAT)
+				  	fatal("width-field %s cannot be specified with float constant", $1->sym->name);
 				  if ($3->val >= 8*sizeof(long))
 				  {	non_fatal("width-field %s too large",
 						$1->sym->name);
@@ -807,8 +816,8 @@ const_expr:	CONST			{ $$ = $1; }
 					  $$->val = $1->val / $3->val;
 					}
 	| const_expr '%' const_expr	{ $$ = $1;
-					  if ($3->val == 0)
-					  { fatal("attempt to take modulo of zero", (char *) 0);
+					  if ($3->constValKind == VALUE_FLOAT || $3->val == 0)
+					  { fatal("attempt to take modulo of zero or trying to compute modulo of float", (char *) 0);
 					  }
 					  $$->val = $1->val % $3->val;
 					}
@@ -870,6 +879,7 @@ expr    : l_par expr r_par		{ $$ = $2; }
 				  $$->ismtyp = $1->ismtyp;
 				  $$->sym = $1->sym;
 				  $$->val = $1->val;
+				  $$->constValKind = $1->constValKind;
 				}
 	| TIMEOUT		{ $$ = nn(ZN,TIMEOUT, ZN, ZN); }
 	| NONPROGRESS		{ $$ = nn(ZN,NONPROGRESS, ZN, ZN);
@@ -1002,6 +1012,7 @@ rarg	: varref		{ $$ = $1; trackvar($1, $1);
 				  $$->ismtyp = $1->ismtyp;
 				  $$->sym = $1->sym;
 				  $$->val = $1->val;
+				  $$->constValKind = $1->constValKind;
 				}
 	| '-' CONST %prec UMIN	{ $$ = nn(ZN,CONST,ZN,ZN);
 				  $$->val = - ($2->val);

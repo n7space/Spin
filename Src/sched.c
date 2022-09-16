@@ -19,7 +19,7 @@ extern int	lineno, nr_errs, dumptab, xspin, jumpsteps, columns;
 extern int	u_sync, Elcnt, interactive, TstOnly, cutoff;
 extern short	has_enabled, has_priority, has_code, replay;
 extern int	limited_vis, product, nclaims, old_priority_rules;
-extern int	old_scope_rules, scope_seq[128], scope_level, has_stdin;
+extern int	old_scope_rules, scope_seq[256], scope_level, has_stdin;
 
 extern int	pc_highest(Lextok *n);
 extern void	putpostlude(void);
@@ -420,6 +420,7 @@ if (0) printf("pid %d cannot run: not provided\n", X_lst->pid);
 	if (has_priority && !old_priority_rules)
 	{	Lextok *n = nn(ZN, CONST, ZN, ZN);
 		n->val = X_lst->pid;
+		n->constValKind = VALUE_INT;
 if (0) printf("pid %d %s run (priority)\n", X_lst->pid, pc_highest(n)?"can":"cannot");
 		return pc_highest(n);
 	}

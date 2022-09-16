@@ -1462,7 +1462,7 @@ nr_bup(Element *e)
 		case 2:		/* dead after write */
 			if (e->n->ntyp == ASGN
 			&&  e->n->rgt->ntyp == CONST
-			&&  e->n->rgt->val == 0)
+			&&  e->n->rgt->val == 0)		// TODO PG - verify type and semantic
 				break;
 			nr++;
 			break;
@@ -1546,7 +1546,7 @@ doforward(FILE *tm_fd, Element *e)
 		case 2:		/* dead after write -- lval already bupped */
 			if (e->n->ntyp == ASGN)	/* could be recv or asgn */
 			{	if (e->n->rgt->ntyp == CONST
-				&&  e->n->rgt->val == 0)
+				&&  e->n->rgt->val == 0)			// TODO PG - verify type and semantic
 					continue;	/* already set to 0 */
 			}
 			if (e->n->ntyp != 'r')
@@ -1947,7 +1947,8 @@ generic_case:	fprintf(fd_tt, "\ttrans[%d][%d]\t= ", Pid_nr, e->seqno);
 		goto non_generic;
 #endif
 	case 'c':
-		if (e->n->lft->ntyp == CONST
+		if (e->n->lft->ntyp == CONST 
+		&& e->n->lft->constValKind == VALUE_INT		// TODO PG - verify what to do if float?
 		&&  e->n->lft->val == 1)	/* skip or true */
 		{	casenr = 1;
 			putskip(e->seqno);
@@ -2066,6 +2067,7 @@ in_settr--;
 
 				if (g->n->ntyp == 'c'
 				&&  g->n->lft->ntyp == CONST
+				&&  g->n->lft->constValKind == VALUE_INT		// TODO PG - verify what to do if float
 				&&  g->n->lft->val == 0		/* 0 or false */
 				&& !g->esc)
 				{	fprintf(fd_tt, "#if 0\n\t/* dead link: */\n");
@@ -2405,7 +2407,7 @@ dump_tree(const char *s, Lextok *p)
 	printf("\n%s:\t%2d:\t%3d (", s, p->ln, p->ntyp);
 	explain(p->ntyp);
 	if (p->ntyp == 315) printf(": %s", p->sym->name);
-	if (p->ntyp == 312) printf(": %d", p->val);
+	if (p->ntyp == CONST) p->constValKind == VALUE_FLOAT ? printf(": %f", getFloatTokenValue(p)): printf(": %d", p->val);
 	printf(")");
 
 	if (p->lft) { sprintf(z, "%sL", s); dump_tree(z, p->lft); }
@@ -2422,7 +2424,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 	Fname  = now->fn;
 
 	switch (now->ntyp) {
-	case CONST:	fprintf(fd, "%d", now->val); break;
+	case CONST:	now->constValKind == VALUE_FLOAT? fprintf(fd, "%f", getFloatTokenValue(now)): fprintf(fd, "%d", now->val); break;
 	case '!':	cat3(" !(", now->lft, ")"); break;
 	case UMIN:	cat3(" -(", now->lft, ")"); break;
 	case '~':	cat3(" ~(", now->lft, ")"); break;
@@ -2599,6 +2601,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			{	if (v->lft->ntyp != CONST
 				&&  v->lft->ntyp != EVAL)
 					continue;
+				// TODO PG - verify what if lft is float const
 				fprintf(fd, " \\\n\t\t|| qrecv(");
 				putname(fd, "", now->lft, m, ", ");
 				putname(fd, "q_len(", now->lft, m, ")-1, ");
@@ -2713,6 +2716,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			{	if (v->lft->ntyp != CONST
 				&&  v->lft->ntyp != EVAL)
 					continue;
+				// TODO PG - verify what if lft is CONST float
 				fprintf(fd, " \\\n\t\t|| qrecv(");
 				putname(fd, "", now->lft, m, ", ");
 				fprintf(fd, "0, %d, 0) != ", i);
@@ -2742,7 +2746,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			fprintf(fd, ")");
 			if (now->val == 0 || now->val == 2)
 			{	for (v = now->rgt, i=j=0; v; v = v->rgt, i++)
-				{ if (v->lft->ntyp == CONST)
+				{ if (v->lft->ntyp == CONST)		// TODO PG - verify what to do if lft is CONST float
 				  { cat3("\n\t\t&& (", v->lft, " == ");
 				    putname(fd, "qrecv(", now->lft, m, ", ");
 				    fprintf(fd, "0, %d, 0))", i);
@@ -2758,7 +2762,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			{	fprintf(fd, "\n\t\t&& Q_has(");
 				putname(fd, "", now->lft, m, "");
 				for (v = now->rgt, i=0; v; v = v->rgt, i++)
-				{	if (v->lft->ntyp == CONST)
+				{	if (v->lft->ntyp == CONST)		// TODO PG - verify if it can be float here
 					{	fprintf(fd, ", 1, ");
 						putstmnt(fd, v->lft, m);
 					} else if (v->lft->ntyp == EVAL)
@@ -2831,9 +2835,9 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		}	}
 
 		fprintf(fd, ";\n\n\t\tXX=1");
-/* test */	if (now->val == 0 || now->val == 2)
+/* test */	if (now->val == 0 || now->val == 2)		// TODO PG - verify kind of const
 		{	for (v = now->rgt, i=0; v; v = v->rgt, i++)
-			{	if (v->lft->ntyp == CONST)
+			{	if (v->lft->ntyp == CONST)			// TODO PG - verify if const should be int here...
 				{ fprintf(fd, ";\n\t\t");
 				  cat3("if (", v->lft, " != ");
 				  putname(fd, "qrecv(", now->lft, m, ", ");
@@ -3127,10 +3131,10 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			{	if (v->lft->ntyp != CONST
 				&&  v->lft->ntyp != EVAL)
 					continue;
-				fprintf(fd, " \\\n\t\t&& qrecv(");
+				fprintf(fd, " \\\n\t\t&& qrecv(");	
 				putname(fd, "", now->lft, m, ", ");
 				fprintf(fd, "0, %d, 0) == ", i);
-				if (v->lft->ntyp == CONST)
+				if (v->lft->ntyp == CONST)		// TODO PG - verify if it can be float here
 				{	putstmnt(fd, v->lft, m);
 				} else /* EVAL */
 				{	if (v->lft->lft->ntyp == ',')	/* usertype2 */
@@ -3151,7 +3155,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			for (v = now->rgt, i=0; v; v = v->rgt, i++)
 			{	if (v->lft->ntyp == CONST)
 				{	fprintf(fd, ", 1, ");
-					putstmnt(fd, v->lft, m);
+					putstmnt(fd, v->lft, m);		// TOFO PG - verify if lft could be float here
 				} else if (v->lft->ntyp == EVAL)
 				{	if (v->lft->lft->ntyp == ',')	/* usertype3 */
 					{	if (0) { dump_tree("3", v->lft->lft); }
@@ -3522,7 +3526,7 @@ putname(FILE *fd, char *pre, Lextok *n, int m, char *suff) /* varref */
 		} else
 		{	if (terse
 			|| (n->lft
-			&&  n->lft->ntyp == CONST
+			&&  n->lft->ntyp == CONST	// TODO PG - make comparison accorfing to types
 			&&  n->lft->val < s->nel)
 			|| (!n->lft && s->nel > 0))
 			{	cat3("[", n->lft, "]");
