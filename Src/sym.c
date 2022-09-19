@@ -364,7 +364,7 @@ setxus(Lextok *p, int t)
 		fatal("non-local x[rs] assertion", (char *)0);
 	}
 	for (m = p; m; m = m->rgt)
-	{	Lextok *Xu_new = (Lextok *) emalloc(sizeof(Lextok));
+	{	Lextok *Xu_new = allocateLextok();
 		Xu_new->uiid = p->uiid;
 		Xu_new->val = t;
 		Xu_new->lft = m->lft;

@@ -284,6 +284,8 @@ Lextok	*rem_lab(Symbol *, Lextok *, Symbol *);
 Lextok	*rem_var(Symbol *, Lextok *, Symbol *, Lextok *);
 Lextok	*tail_add(Lextok *, Lextok *);
 Lextok	*return_statement(Lextok *);
+Lextok	*allocateLextok(void);
+
 
 ProcList *mk_rdy(Symbol *, Lextok *, Sequence *, int, Lextok *, enum btypes);
 

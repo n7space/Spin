@@ -345,6 +345,14 @@ return_statement(Lextok *n)
 	return ZN;
 }
 
+Lextok *
+allocateLextok(void)
+{
+	Lextok* newLextokPtr = (Lextok *) emalloc(sizeof(Lextok));
+	newLextokPtr->constValKind = VALUE_INT;
+	return newLextokPtr;
+}
+
 static int
 getinline(void)
 {	int c;
