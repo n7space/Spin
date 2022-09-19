@@ -658,8 +658,17 @@ c_chandump(FILE *fd)
 				{	fprintf(fd, ", 0");
 				}
 			} else
-			{	fprintf(fd, "\tprintf(\"%%d,\", %scontents[slot].fld%d",
+			{
+				if (q->fld_width[i] == FLOAT)
+				{
+					fprintf(fd, "\tprintf(\"%%f,\", %scontents[slot].fld%d",
 					buf, i);
+				}
+				else
+				{
+					fprintf(fd, "\tprintf(\"%%d,\", %scontents[slot].fld%d",
+					buf, i);
+				}
 			}
 			fprintf(fd, ");\n\t\t");
 		}

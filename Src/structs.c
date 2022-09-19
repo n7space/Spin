@@ -28,6 +28,7 @@ static UType *Pnames = 0;
 
 static Lextok	*cpnn(Lextok *, int, int, int);
 extern void	sr_mesg(FILE *, int, int, const char *);
+extern void	sr_mesg_f(FILE *, float, int, const char *);
 extern void	Done_case(char *, Symbol *);
 
 void
@@ -558,9 +559,15 @@ dump_struct(Symbol *z, char *prefix, RunList *r)
 					&&  tl->sym->mtype_name)
 					{	s = tl->sym->mtype_name->name;
 					}
-
-					sr_mesg(stdout, getInt(tl->sym->val[jx]),
+					if (tl->sym->type == FLOAT)
+					{	sr_mesg_f(stdout, getFloat(tl->sym->val[jx]),
+							tl->sym->type == MTYPE, s);
+					}
+					else
+					{
+						sr_mesg(stdout, getInt(tl->sym->val[jx]),
 						tl->sym->type == MTYPE, s);		// TODO PG - handle floats in queues? structs?
+					}
 					printf("\n");
 		}	}	}
 	}

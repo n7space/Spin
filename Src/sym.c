@@ -536,7 +536,7 @@ symvar(Symbol *sp)
 	else if (is_typedef(sp->type) && sp->Snm != NULL) /* Frank Weil, 2.9.8 */
 		printf("\t%s", sp->Snm->name);
 	else
-		printf("\t%d", eval(sp->ini));
+		printf("\t%d", eval(sp->ini));	// TODO PG - handle floats
 
 	if (sp->owner)
 		printf("\t<:struct-field:>");

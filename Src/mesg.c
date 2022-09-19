@@ -790,13 +790,23 @@ doq(Symbol *s, int n, RunList *r)
 		}
 
 		for (k = 0; k < q->qlen; k++)
-		{	printf("[");
+		{	printf("[");			// dumping of queue content
 			for (j = 0; j < q->nflds; j++)
 			{	if (j > 0) printf(",");
-				sr_mesg(stdout,
-					getInt(q->contents[k*q->nflds+j]),	// TODO PG - handle float in queues?
-					q->fld_width[j] == MTYPE,
-					q->mtp[j]);
+				Value content =  q->contents[k*q->nflds+j];
+				if (content.kind == VALUE_FLOAT)
+				{	sr_mesg_f(stdout,
+						content.value.floatValue,
+						q->fld_width[j] == MTYPE,
+						q->mtp[j] );
+				}
+				else
+				{
+					sr_mesg(stdout,
+						content.value.intValue,	
+						q->fld_width[j] == MTYPE,
+						q->mtp[j]);
+				}
 			}
 			printf("]");
 		}
