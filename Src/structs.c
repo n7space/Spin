@@ -362,7 +362,7 @@ cpnn(Lextok *s, int L, int R, int S)
 
 	if (!s) return ZN;
 
-	d = (Lextok *) emalloc(sizeof(Lextok));
+	d = allocateLextok();
 	d->uiid = s->uiid;
 	d->ntyp = s->ntyp;
 	d->val  = s->val;

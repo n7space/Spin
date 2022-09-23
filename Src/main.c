@@ -1337,7 +1337,8 @@ setaccess(Symbol *sp, Symbol *what, int cnt, int t)
 
 Lextok *
 nn(Lextok *s, int t, Lextok *ll, Lextok *rl)
-{	Lextok *n = (Lextok *) emalloc(sizeof(Lextok));
+{	Lextok *n = allocateLextok();
+
 	static int warn_nn = 0;
 
 	n->uiid = is_inline();	/* record origin of the statement */
