@@ -5,6 +5,7 @@ SPIN?=${BASE_DIR}/Src/spin
 EXAMPLE_MODEL_DIR=${BASE_DIR}/Examples
 USER_TYPES_MODEL_DIR=${BASE_DIR}/Test/UserTypes
 FLOAT_MODEL_DIR=${BASE_DIR}/Test/Float
+FLOAT_DUMPING_MODEL_DIR=${BASE_DIR}/Test/Float/Dumping
 TEST_DIR=Out
 
 CC?=gcc
@@ -45,7 +46,8 @@ FLOAT_TESTS = \
 	test_float_literal_values \
 	test_float_arithmetic_operators \
 	test_float_arithmetic \
-	test_float_in_struct
+	test_float_in_struct \
+	test_float_can_be_dumped
 
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
@@ -510,4 +512,41 @@ test_float_in_struct:
 	grep -q "106 transitions (= stored+matched)" ${TEST_DIR}/FloatInStruct.output
 	grep -q "0 atomic steps" ${TEST_DIR}/FloatInStruct.output
 	grep -q "Data is 101 and 10.10" ${TEST_DIR}/FloatInStruct.sim.output		
+	${DELETE_TEST_DIR}
+
+#Test float dumping 
+test_float_can_be_dumped:
+	echo "Test float dumping"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_DUMPING_MODEL_DIR}/FloatsCanBeDumped.pml > FloatsCanBeDumped.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_DUMPING_MODEL_DIR}/FloatsCanBeDumped.pml > FloatsCanBeDumped.sim.output
+	grep -q "pan:1: invalid end state (at depth 39)" ${TEST_DIR}/FloatsCanBeDumped.output
+	grep -q "State-vector 172 byte, depth reached 40, errors: 1" ${TEST_DIR}/FloatsCanBeDumped.output
+	grep -q "timeout" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "#processes: 1" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "float_var = 4.830000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "byte_var = 6" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "int_var = 234565" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "float_array\[0\] = 3.140000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "float_array\[1\] = 2.700000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].bit_field = 0" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].byte_field = 9" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].int_field = 3432" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].float_field = 5.560000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].inner_int = 21" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].floats.inner_float_array\[0\] = 0.250000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].floats.inner_float_array\[1\] = 1.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].floats.inner_float_array\[2\] = 1.750000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[1\].inner_int = 22" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[1\].floats.inner_float_array\[1\] = 2.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].bit_field = 1" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].byte_field = 12" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].int_field = 3435" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].float_field = 8.559999" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].inner_float_struct_array\[1\].inner_int = 25" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].inner_float_struct_array\[1\].floats.inner_float_array\[1\] = 5.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "queue 2 (struct_channel): \[22,1.250000,2.500000,2.750000\]\[24,3.250000,4.500000,4.750000\]" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "FloatsCanBeDumped.pml:79 (state 53)" ${TEST_DIR}/FloatsCanBeDumped.sim.output		
 	${DELETE_TEST_DIR}
