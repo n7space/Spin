@@ -50,7 +50,8 @@ FLOAT_TESTS = \
 	test_float_in_struct \
 	test_float_can_be_dumped \
 	test_simple_floats_through_channel \
-	test_channel_with_floats_enumeration
+	test_channel_with_floats_enumeration \
+	test_complex_structures_with_floats_in_channels
 
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
@@ -584,4 +585,27 @@ test_channel_with_floats_enumeration:
 	grep -q "3.140000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	grep -q "2.700000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	grep -q "2 processes created" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
+	${DELETE_TEST_DIR}
+
+#Test complex structures with floats in channels
+test_complex_structures_with_floats_in_channels:
+	echo "Test complex structures with floats in channels"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run -a ${FLOAT_CHANNEL_MODEL_DIR}/ComplexFloatMessage.pml > ComplexFloatMessage.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ComplexFloatMessage.pml > ComplexFloatMessage.sim.output
+	grep -q "State-vector 404 byte, depth reached 295, errors: 0" ${TEST_DIR}/ComplexFloatMessage.output
+	grep -q "703 states, stored" ${TEST_DIR}/ComplexFloatMessage.output
+	grep -q "154 states, matched" ${TEST_DIR}/ComplexFloatMessage.output
+	grep -q "hash conflicts:         0 (resolved)" ${TEST_DIR}/ComplexFloatMessage.output
+	grep -q "Receiver: index=11, value=0.250000" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "Final message received!" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "queue 1 (queue): \[11,0.250000\]\[11,0.300000\]" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "queue 2 (dqueue): \[0.100000,0.200000,0.300000,0.400000,0.500000,0.600000,0.700000,0.800000,0.900000,0.750000,0,0.000000,52\]\[0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0,5.250000,0\]\[0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,45,0.000000,0\]" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "finalValue = 0.250000" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "finalIndex = 11" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "ComplexFloatMessage.pml:80 (state 25)" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "ComplexFloatMessage.pml:51 (state 25) <valid end state>" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "ComplexFloatMessage.pml:91 (state 3) <valid end state>" ${TEST_DIR}/ComplexFloatMessage.sim.output
 	${DELETE_TEST_DIR}
