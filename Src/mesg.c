@@ -698,6 +698,8 @@ sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
 	fflush(stdout);
 }
 
+/* TODO sr_buf_f and sr_buf should be refactored 
+- however, more investigation needed on for loop meaning */
 void
 sr_buf_f(float v, int j, const char *s)
 {	int cnt = 1; Lextok *n;
