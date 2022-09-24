@@ -27,8 +27,14 @@ getTypeInternal(const Lextok *const token) {
     Symbol *s = token->sym;
 
 	if (!s)
-		return 0;
-
+	{
+		if (token->constValKind == VALUE_FLOAT)
+		{	return FLOAT;
+		}
+		else
+		{	return 0;
+		}
+	}
 	if (s->context && context && s->type)
 		s = findloc(s);		/* it's a local var */
 

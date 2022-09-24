@@ -5,7 +5,8 @@ SPIN?=${BASE_DIR}/Src/spin
 EXAMPLE_MODEL_DIR=${BASE_DIR}/Examples
 USER_TYPES_MODEL_DIR=${BASE_DIR}/Test/UserTypes
 FLOAT_MODEL_DIR=${BASE_DIR}/Test/Float
-FLOAT_DUMPING_MODEL_DIR=${BASE_DIR}/Test/Float/Dumping
+FLOAT_DUMPING_MODEL_DIR=${FLOAT_MODEL_DIR}/Dumping
+FLOAT_CHANNEL_MODEL_DIR=${FLOAT_MODEL_DIR}/Channels
 TEST_DIR=Out
 
 CC?=gcc
@@ -47,7 +48,8 @@ FLOAT_TESTS = \
 	test_float_arithmetic_operators \
 	test_float_arithmetic \
 	test_float_in_struct \
-	test_float_can_be_dumped
+	test_float_can_be_dumped \
+	test_simple_floats_through_channel
 
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
@@ -549,4 +551,20 @@ test_float_can_be_dumped:
 	grep -q "item_array\[1\].inner_float_struct_array\[1\].floats.inner_float_array\[1\] = 5.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
 	grep -q "queue 2 (struct_channel): \[22,1.250000,2.500000,2.750000\]\[24,3.250000,4.500000,4.750000\]" ${TEST_DIR}/FloatsCanBeDumped.sim.output
 	grep -q "FloatsCanBeDumped.pml:79 (state 53)" ${TEST_DIR}/FloatsCanBeDumped.sim.output		
+	${DELETE_TEST_DIR}
+
+#Test float dumping 
+test_simple_floats_through_channel:
+	echo "Test simple floats through channel"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/SimpleFloatThroughChannel.pml > SimpleFloatThroughChannel.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/SimpleFloatThroughChannel.pml > SimpleFloatThroughChannel.sim.output
+	grep -q "State-vector 48 byte, depth reached 9, errors: 0" ${TEST_DIR}/SimpleFloatThroughChannel.output
+	grep -q "13 states, stored" ${TEST_DIR}/SimpleFloatThroughChannel.output
+	grep -q "1 states, matched" ${TEST_DIR}/SimpleFloatThroughChannel.output
+	grep -q "first value = 3.140000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	grep -q "second value = 2.700000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	grep -q "2 processes created" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
 	${DELETE_TEST_DIR}
