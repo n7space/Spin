@@ -553,7 +553,7 @@ test_float_can_be_dumped:
 	grep -q "FloatsCanBeDumped.pml:79 (state 53)" ${TEST_DIR}/FloatsCanBeDumped.sim.output		
 	${DELETE_TEST_DIR}
 
-#Test float dumping 
+#Test simple floats through channel 
 test_simple_floats_through_channel:
 	echo "Test simple floats through channel"
 	${CREATE_TEST_DIR}
