@@ -579,9 +579,9 @@ test_channel_with_floats_enumeration:
 	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.output
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.sim.output
-	grep -q "State-vector 48 byte, depth reached 15, errors: 0" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
-	grep -q "39 states, stored" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
-	grep -q "3 states, matched" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "State-vector 56 byte, depth reached 17, errors: 0" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "18 states, stored" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "0 states, matched" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
 	grep -q "3.140000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	grep -q "2.700000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	grep -q "2 processes created" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
