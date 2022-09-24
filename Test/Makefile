@@ -49,7 +49,8 @@ FLOAT_TESTS = \
 	test_float_arithmetic \
 	test_float_in_struct \
 	test_float_can_be_dumped \
-	test_simple_floats_through_channel
+	test_simple_floats_through_channel \
+	test_channel_with_floats_enumeration
 
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
@@ -567,4 +568,20 @@ test_simple_floats_through_channel:
 	grep -q "first value = 3.140000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
 	grep -q "second value = 2.700000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
 	grep -q "2 processes created" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	${DELETE_TEST_DIR}
+
+#Test channel with floats enumeration 
+test_channel_with_floats_enumeration:
+	echo "Test channel with floats enumeration"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.sim.output
+	grep -q "State-vector 48 byte, depth reached 15, errors: 0" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "39 states, stored" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "3 states, matched" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "3.140000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
+	grep -q "2.700000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
+	grep -q "2 processes created" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	${DELETE_TEST_DIR}
