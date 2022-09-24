@@ -38,8 +38,8 @@ static int	sa_snd(Queue *, Lextok *);
 static int	s_snd(Queue *, Lextok *);
 extern Lextok	**find_mtype_list(const char *);
 extern char	*which_mtype(const char *);
-extern void	sr_buf(int, int, const char *);
-extern void	sr_mesg(FILE *, int, int, const char *);
+void	sr_buf(int, int, const char *);
+void	sr_mesg(FILE *, int, int, const char *);
 extern void	putarrow(int, int);
 static void	sr_talk(Lextok *, int, char *, char *, int, Queue *);
 
@@ -612,7 +612,7 @@ docolumns(Lextok *n, char *tr, int v, int j, Queue *q)
 	} else
 		printf(",");
 	if (tr[0] == '[') printf("[");
-	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);
+	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);	// TODO PG - find proper scenario to activate and verify
 	if (j == q->nflds - 1)
 	{	if (tr[0] == '[') printf("]");
 		printf("\n");
@@ -682,7 +682,7 @@ sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
 	} else
 	{	printf(",");
 	}
-	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);
+	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);	// TODO PG - find scenario to activate and verify
 
 	if (j == q->nflds - 1)
 	{	if (xspin)
@@ -761,6 +761,26 @@ sr_mesg(FILE *fd, int v, int j, const char *s)
 }
 
 void
+sr_mesg_const_token(FILE *fd, const Lextok *token, const char *s)
+{	if (token->constValKind == VALUE_FLOAT)
+		sr_mesg_f(fd, getFloatTokenValue(token), token->ismtyp, s);
+	else
+		sr_mesg(fd, token->val, token->ismtyp, s);
+}
+
+void
+sr_mesg_value(FILE *fd, const Value val, int isMTYPE, const char *s)
+{	if (val.kind == VALUE_FLOAT)
+	{	sr_mesg_f(fd, val.value.floatValue,
+			isMTYPE, s);
+	}
+	else
+	{	sr_mesg(fd, val.value.intValue,
+			isMTYPE, s);	
+	}
+}
+
+void
 doq(Symbol *s, int n, RunList *r)
 {	Queue *q;
 	int j, k;
@@ -794,19 +814,9 @@ doq(Symbol *s, int n, RunList *r)
 			for (j = 0; j < q->nflds; j++)
 			{	if (j > 0) printf(",");
 				Value content =  q->contents[k*q->nflds+j];
-				if (content.kind == VALUE_FLOAT)
-				{	sr_mesg_f(stdout,
-						content.value.floatValue,
+				sr_mesg_value(stdout, content,
 						q->fld_width[j] == MTYPE,
 						q->mtp[j] );
-				}
-				else
-				{
-					sr_mesg(stdout,
-						content.value.intValue,	
-						q->fld_width[j] == MTYPE,
-						q->mtp[j]);
-				}
 			}
 			printf("]");
 		}

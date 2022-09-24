@@ -2397,6 +2397,10 @@ Bailout(FILE *fd, char *str)
 #define cat3(x,y,z)	fprintf(fd,x); putstmnt(fd,y,m); fprintf(fd,z)
 #define cat30(x,y,z)	fprintf(fd,x,0); putstmnt(fd,y,m); fprintf(fd,z)
 
+#define cat3_token(prefix, token, suffix) fprintf(fd, prefix); \
+			if (getType(token) == FLOAT) {cat3("%%f,\", ", token, suffix);} else {cat3("%%d,\", ", token, suffix);};
+
+
 extern void explain(int);
 void
 dump_tree(const char *s, Lextok *p)
@@ -2658,17 +2662,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		putname(fd, "\t\t\tsprintf(simvals, \"%%d!\", ", now->lft, m, ");\n");
 		_isok++;
 		for (v = now->rgt, i = 0; v; v = v->rgt, i++)
-		{
-			const unsigned short variableType = getType(v->lft);
-			const int isFloat = variableType == FLOAT;
-			if (isFloat)
-			{
-				cat3("\t\tsprintf(simtmp, \"%%f\", ", v->lft, "); strcat(simvals, simtmp);");
-			}
-			else
-			{
-				cat3("\t\tsprintf(simtmp, \"%%d\", ", v->lft, "); strcat(simvals, simtmp);");
-			}
+		{	cat3_token("\t\tsprintf(simtmp, \"", v->lft, "); strcat(simvals, simtmp);");
 			if (v->rgt)
 			fprintf(fd, "\t\tstrcat(simvals, \",\");\n");
 		}
@@ -2747,7 +2741,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			if (now->val == 0 || now->val == 2)
 			{	for (v = now->rgt, i=j=0; v; v = v->rgt, i++)
 				{ if (v->lft->ntyp == CONST)		// TODO PG - verify what to do if lft is CONST float
-				  { cat3("\n\t\t&& (", v->lft, " == ");
+				  {	cat3("\n\t\t&& (", v->lft, " == ");
 				    putname(fd, "qrecv(", now->lft, m, ", ");
 				    fprintf(fd, "0, %d, 0))", i);
 				  } else if (v->lft->ntyp == EVAL)
@@ -3031,46 +3025,18 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		_isok++;
 		for (v = now->rgt, i = 0; v; v = v->rgt, i++)
 		{	if (v->lft->ntyp != EVAL)
-			{
-				const unsigned short variableType = getType(v->lft);
-				const int isFloat = variableType == FLOAT;
-				if (isFloat)
-				{
-					cat3("\t\t\tsprintf(simtmp, \"%%f\", ", v->lft, "); strcat(simvals, simtmp);");
-				}
-				else
-				{
-					cat3("\t\t\tsprintf(simtmp, \"%%d\", ", v->lft, "); strcat(simvals, simtmp);");
-				}
+			{	cat3_token("\t\t\tsprintf(simtmp, \"", v->lft, "); strcat(simvals, simtmp);");
 			} else
 			{	if (v->lft->lft->ntyp == ',')	/* usertype4 */
 				{	if (0) { dump_tree("4", v->lft->lft); }
 					Lextok *fix = v->lft->lft;
-					do { i++;
-						const unsigned short variableType = getType(fix->lft);
-						const int isFloat = variableType == FLOAT;
-						if (isFloat)
-						{
-							cat3("\n\t\t\tsprintf(simtmp, \"%%f,\", ", fix->lft, "); strcat(simvals, simtmp);");
-						}
-						else
-						{
-							cat3("\n\t\t\tsprintf(simtmp, \"%%d,\", ", fix->lft, "); strcat(simvals, simtmp);");
-						}
+					do 
+					{	i++;
+						cat3_token("\n\t\t\tsprintf(simtmp, \"", fix->lft, "); strcat(simvals, simtmp);");
 					    fix = fix->rgt;
 					} while (fix && fix->ntyp == ',');
 				} else
-				{
-					const unsigned short variableType = getType(v->lft->lft);
-					const int isFloat = variableType == FLOAT;
-					if (isFloat)
-					{
-						cat3("\n\t\t\tsprintf(simtmp, \"%%f\", ", v->lft->lft, "); strcat(simvals, simtmp);");
-					}
-					else
-					{
-						cat3("\n\t\t\tsprintf(simtmp, \"%%d\", ", v->lft->lft, "); strcat(simvals, simtmp);");
-					}
+				{	cat3_token("\n\t\t\tsprintf(simtmp, \"", v->lft->lft, "); strcat(simvals, simtmp);");
 				}
 			}
 			if (v->rgt)
@@ -3134,7 +3100,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 				fprintf(fd, " \\\n\t\t&& qrecv(");	
 				putname(fd, "", now->lft, m, ", ");
 				fprintf(fd, "0, %d, 0) == ", i);
-				if (v->lft->ntyp == CONST)		// TODO PG - verify if it can be float here
+				if (v->lft->ntyp == CONST)
 				{	putstmnt(fd, v->lft, m);
 				} else /* EVAL */
 				{	if (v->lft->lft->ntyp == ',')	/* usertype2 */
@@ -3155,7 +3121,7 @@ putstmnt(FILE *fd, Lextok *now, int m)
 			for (v = now->rgt, i=0; v; v = v->rgt, i++)
 			{	if (v->lft->ntyp == CONST)
 				{	fprintf(fd, ", 1, ");
-					putstmnt(fd, v->lft, m);		// TOFO PG - verify if lft could be float here
+					putstmnt(fd, v->lft, m);		// TODO PG - verify if lft could be float here
 				} else if (v->lft->ntyp == EVAL)
 				{	if (v->lft->lft->ntyp == ',')	/* usertype3 */
 					{	if (0) { dump_tree("3", v->lft->lft); }

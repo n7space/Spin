@@ -20,8 +20,7 @@ extern short	no_arrays, Have_claim, terse;
 extern Symbol	*Fname;
 
 extern void	sr_buf(int, int, const char *);
-extern void	sr_mesg(FILE *, int, int, const char *);
-extern void	sr_mesg_f(FILE *, float, int, const char *);
+extern void	sr_mesg_value(FILE *, const Value, int, const char *);
 
 static Value getglobal(Lextok *);
 static int	setglobal(Lextok *, Value);
@@ -287,7 +286,7 @@ dumpglobals(void)
 			dummy->sym = sp;
 			dummy->lft->val = j;
 			/* in case of cast_val warnings, do this first: */
-			prefetch = getglobal(dummy);		// TODO PG - verify and handle float fields
+			prefetch = getglobal(dummy);
 			printf("\t\t%s", sp->name);
 			if (sp->nel > 1 || sp->isarray) printf("[%d]", j);
 			printf(" = ");
@@ -295,12 +294,7 @@ dumpglobals(void)
 			&&  sp->mtype_name)
 			{	s = sp->mtype_name->name;
 			}
-			if (prefetch.kind == VALUE_FLOAT)
-			{	sr_mesg_f(stdout, prefetch.value.floatValue, sp->type == MTYPE, s);
-			}
-			else
-			{	sr_mesg(stdout, prefetch.value.intValue, sp->type == MTYPE, s);	// TODO PG - handle float fields
-			}
+			sr_mesg_value(stdout, prefetch, sp->type == MTYPE, s);
 			printf("\n");
 			if (limited_vis && (sp->hidden&2))
 			{	int colpos;
@@ -311,7 +305,7 @@ dumpglobals(void)
 					else
 						sprintf(GBuf, "%s = ", sp->name);
 				}
-				sr_buf(getInt(prefetch), sp->type == MTYPE, s); // TODO PG - handle floats
+				sr_buf(getInt(prefetch), sp->type == MTYPE, s); // TODO PG - handle float in prefetch value
 				if (sp->colnr == 0)
 				{	sp->colnr = (unsigned char) maxcolnr;
 					maxcolnr = 1+(maxcolnr%10);
@@ -380,7 +374,7 @@ dumplocal(RunList *r, int final)
 			&&  z->mtype_name)
 			{	t = z->mtype_name->name;
 			}
-			sr_mesg(stdout, getInt(getval(dummy)), z->type == MTYPE, t);	// TODO PG - handle float fields
+			sr_mesg_value(stdout, getval(dummy), z->type == MTYPE, t);
 			printf("\n");
 			if (limited_vis && (z->hidden&2))
 			{	int colpos;
@@ -393,7 +387,7 @@ dumplocal(RunList *r, int final)
 					sprintf(GBuf, "%s(%d):%s = ",
 					r->n->name, r->pid, z->name);
 				}
-				sr_buf(getInt(getval(dummy)), z->type==MTYPE, t);
+				sr_buf(getInt(getval(dummy)), z->type==MTYPE, t);	// TODO PG - handle float in dummy value
 				if (z->colnr == 0)
 				{	z->colnr = (unsigned char) maxcolnr;
 					maxcolnr = 1+(maxcolnr%10);
