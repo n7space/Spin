@@ -28,7 +28,7 @@ static SRC	*frst = (SRC *) 0;
 static SRC	*skip = (SRC *) 0;
 
 extern int	ltl_mode;
-extern void sr_mesg_const_token(FILE *,const Lextok *, const char *);
+extern void	sr_mesg_const_token(FILE *,const Lextok *, const char *);
 extern Lextok	**find_mtype_list(const char *);
 
 static void
