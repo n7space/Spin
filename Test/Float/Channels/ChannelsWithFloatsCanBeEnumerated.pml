@@ -17,8 +17,14 @@ active proctype receiver()
     /* wait on synchro channel for filled q channel */
     synchro?1;
     
+    float correct_answers[2];
+    correct_answers[0]=3.14;
+    correct_answers[1]=2.7;
+    byte count =0;
     for (a in q)
     {
         printf("%f\n",a.x);
+        assert(a.x == correct_answers[count]);
+        count++;
     }
 }

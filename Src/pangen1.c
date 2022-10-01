@@ -1412,7 +1412,7 @@ qlen_type(int qmax)
 }
 
 void
-genaddqueue(void)
+genaddqueue(void)			// TODO PG - queues generation for pan 
 {	char buf0[256];
 	int j, qmax = 0;
 	Queue *q;
@@ -1526,8 +1526,8 @@ genaddqueue(void)
 
 	fprintf(fd_tc, "#if NQS>0\n");
 	fprintf(fd_tc, "void\nqsend(int into, int sorted");
-	for (j = 0; j < Mpars; j++)
-		fprintf(fd_tc, ", int fld%d", j);
+	for (j = 0; j < Mpars; j++)				
+		fprintf(fd_tc, ", double fld%d", j);	// TODO PG - apply proper type for each field - not necessary int
 	fprintf(fd_tc, ", int args_given)\n");
 	ntimes(fd_tc, 0, 1, Addq11);
 
@@ -1646,7 +1646,7 @@ genaddqueue(void)
 
 	fprintf(fd_th, "void qsend(int, int");
 	for (j = 0; j < Mpars; j++)
-		fprintf(fd_th, ", int");
+		fprintf(fd_th, ", double");
 	fprintf(fd_th, ", int);\n\n");
 
 	fprintf(fd_th, "#define Addproc(x,y)	addproc(256, y, x");

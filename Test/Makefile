@@ -50,6 +50,7 @@ FLOAT_TESTS = \
 	test_float_in_struct \
 	test_float_can_be_dumped \
 	test_simple_floats_through_channel \
+	test_ping_pong_with_floats_through_channel \
 	test_channel_with_floats_enumeration \
 	test_complex_structures_with_floats_in_channels
 
@@ -563,12 +564,23 @@ test_simple_floats_through_channel:
 	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/SimpleFloatThroughChannel.pml > SimpleFloatThroughChannel.output
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/SimpleFloatThroughChannel.pml > SimpleFloatThroughChannel.sim.output
-	grep -q "State-vector 48 byte, depth reached 9, errors: 0" ${TEST_DIR}/SimpleFloatThroughChannel.output
-	grep -q "13 states, stored" ${TEST_DIR}/SimpleFloatThroughChannel.output
-	grep -q "1 states, matched" ${TEST_DIR}/SimpleFloatThroughChannel.output
-	grep -q "first value = 3.140000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
-	grep -q "second value = 2.700000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	grep -q "errors: 0" ${TEST_DIR}/SimpleFloatThroughChannel.output
+	grep -q "first value = 2.700000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	grep -q "second value = 3.140000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
 	grep -q "2 processes created" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	${DELETE_TEST_DIR}
+
+#Test ping pong with floats through channel 
+test_ping_pong_with_floats_through_channel:
+	echo "Test ping pong with floats through channel"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/PingPong.pml > PingPong.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/PingPong.pml > PingPong.sim.output
+	grep -q "errors: 0" ${TEST_DIR}/PingPong.output
+	grep -q "Got pong = 3.141500" ${TEST_DIR}/PingPong.sim.output
+	grep -q "2 processes created" ${TEST_DIR}/PingPong.sim.output
 	${DELETE_TEST_DIR}
 
 #Test channel with floats enumeration 
@@ -579,9 +591,7 @@ test_channel_with_floats_enumeration:
 	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.output
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.sim.output
-	grep -q "State-vector 56 byte, depth reached 17, errors: 0" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
-	grep -q "18 states, stored" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
-	grep -q "0 states, matched" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q ", errors: 0" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
 	grep -q "3.140000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	grep -q "2.700000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
 	grep -q "2 processes created" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
@@ -595,10 +605,7 @@ test_complex_structures_with_floats_in_channels:
 	${SPIN} -run -a ${FLOAT_CHANNEL_MODEL_DIR}/ComplexFloatMessage.pml > ComplexFloatMessage.output
 	cd ${TEST_DIR} && \
 	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ComplexFloatMessage.pml > ComplexFloatMessage.sim.output
-	grep -q "State-vector 404 byte, depth reached 295, errors: 0" ${TEST_DIR}/ComplexFloatMessage.output
-	grep -q "703 states, stored" ${TEST_DIR}/ComplexFloatMessage.output
-	grep -q "154 states, matched" ${TEST_DIR}/ComplexFloatMessage.output
-	grep -q "hash conflicts:         0 (resolved)" ${TEST_DIR}/ComplexFloatMessage.output
+	grep -q ", errors: 0" ${TEST_DIR}/ComplexFloatMessage.output
 	grep -q "Receiver: index=11, value=0.250000" ${TEST_DIR}/ComplexFloatMessage.sim.output
 	grep -q "Final message received!" ${TEST_DIR}/ComplexFloatMessage.sim.output
 	grep -q "queue 1 (queue): \[11,0.250000\]\[11,0.300000\]" ${TEST_DIR}/ComplexFloatMessage.sim.output
