@@ -504,8 +504,8 @@ static const char *Preamble[] = {
 	"void iniglobals(int);",
 	"void stopped(int);",
 	"void wrapup(void);",
-	"int *grab_ints(int);",
-	"void ungrab_ints(int *, int);",
+	"double *grab_values(int);",
+	"void ungrab_values(double *, int);",
 	0,
 };
 

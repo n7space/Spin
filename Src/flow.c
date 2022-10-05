@@ -946,8 +946,16 @@ valid_name(Lextok *a3, Lextok *a5, Lextok *a8, char *tp)
 	||  a3->sym->isarray != 0)
 	{	fatal("bad index in for-construct %s", a3->sym->name);
 	}
-	if (a5->ntyp == CONST && a8->ntyp == CONST && a5->val > a8->val)		// TODO: PG - validate CONST type? should be INT?
-	{	non_fatal("start value for %s exceeds end-value", a3->sym->name);
+	if (a5->ntyp == CONST && a8->ntyp == CONST)
+	{
+		if (a5->constValKind == VALUE_INT && a8->constValKind == VALUE_INT)
+		{
+			if (a5->val > a8->val)
+			{	non_fatal("start value for %s exceeds end-value", a3->sym->name);
+			}
+		}
+		else
+			fatal("Floats not handled in %s", a3->sym->name);
 	}
 }
 

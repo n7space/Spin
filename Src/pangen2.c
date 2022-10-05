@@ -1518,7 +1518,7 @@ static void
 check_needed(void)
 {
 	if (multi_needed)
-	{	fprintf(fd_tm, "(trpt+1)->bup.ovals = grab_ints(%d);\n\t\t",
+	{	fprintf(fd_tm, "(trpt+1)->bup.ovals = grab_values(%d);\n\t\t",
 			multi_needed);
 		multi_undo = multi_needed;
 		multi_needed = 0;
@@ -1559,30 +1559,19 @@ doforward(FILE *tm_fd, Element *e)
 			} /* else fall through */
 		case 1:		/* dead after read -- add asgn of rval -- needs bup */
 			YZ[YZmax].sym = u->var;	/* store for pan.b */
-			const unsigned short variableType = getType(&YZ[YZmax]);
-			const int isFloat = variableType == FLOAT;
+			
 			CnT[YZcnt]++;		/* this step added bups */
 			if (multi_oval)
 			{	check_needed();
-				if (isFloat)
-					fprintf(tm_fd, "(trpt+1)->bup.ovals[%d] = *(int*)(void*)&(",
-						multi_oval-1);
-				else
-					fprintf(tm_fd, "(trpt+1)->bup.ovals[%d] = ",
+				fprintf(tm_fd, "(trpt+1)->bup.ovals[%d] = ",
 						multi_oval-1);
 				multi_oval++;
 			}
 			else
-			{
-				if (isFloat)
-					fprintf(tm_fd, "(trpt+1)->bup.oval = *(int*)(void*)&(");
-				else
-					fprintf(tm_fd, "(trpt+1)->bup.oval = ");
+			{	fprintf(tm_fd, "(trpt+1)->bup.oval = ");
 			}
-			if (isFloat)
-				putname(tm_fd, "", &YZ[YZmax], 0, ");\n");
-			else
-				putname(tm_fd, "", &YZ[YZmax], 0, ";\n");
+			putname(tm_fd, "", &YZ[YZmax], 0, ";\n");
+			
 			fprintf(tm_fd, "#ifdef HAS_CODE\n");
 			fprintf(tm_fd, "\t\tif (!readtrail)\n");
 			fprintf(tm_fd, "#endif\n\t\t\t");
@@ -1614,16 +1603,7 @@ dobackward(Element *e, int casenr)
 		if (YZmax < 0)
 			fatal("cannot happen, dobackward", (char *)0);
 		fprintf(fd_tb, ";\n\t/* %d */\t", YZmax);
-		const unsigned short variableType = getType(&YZ[YZmax]);
-		const int isFloat = variableType == FLOAT;
-		if (isFloat)
-		{
-			putname(fd_tb, "*(int*)(void*)&(", &YZ[YZmax], 0, ") = trpt->bup.oval");
-		}
-		else
-		{
-			putname(fd_tb, "", &YZ[YZmax], 0, " = trpt->bup.oval");
-		}
+		putname(fd_tb, "", &YZ[YZmax], 0, " = trpt->bup.oval");
 
 
 		if (multi_oval > 0)
@@ -1875,7 +1855,7 @@ out:
 	fprintf(fd_tb, "\n\t\t");
 
 	if (multi_undo)
-	{	fprintf(fd_tb, "ungrab_ints(trpt->bup.ovals, %d);\n\t\t",
+	{	fprintf(fd_tb, "ungrab_values(trpt->bup.ovals, %d);\n\t\t",
 			multi_undo);
 		multi_undo = 0;
 	}
@@ -1948,8 +1928,11 @@ generic_case:	fprintf(fd_tt, "\ttrans[%d][%d]\t= ", Pid_nr, e->seqno);
 #endif
 	case 'c':
 		if (e->n->lft->ntyp == CONST 
-		&& e->n->lft->constValKind == VALUE_INT		// TODO PG - verify what to do if float?
-		&&  e->n->lft->val == 1)	/* skip or true */
+		&& (
+			(e->n->lft->constValKind == VALUE_INT		
+			&&  e->n->lft->val == 1)
+			|| (e->n->lft->constValKind == VALUE_FLOAT	// TODO - is it possible?
+				&& e->n->lft->val == 1.0)))	/* skip or true */
 		{	casenr = 1;
 			putskip(e->seqno);
 			goto generic_case;
@@ -3184,41 +3167,17 @@ putstmnt(FILE *fd, Lextok *now, int m)
 		{
 			int old_nocast = nocast;
 			nocast = 1;
-			const unsigned short variableType = getType(now->lft);
-			const int isFloat = variableType == FLOAT;
 			if (multi_oval)
 			{	char tempbuf[64];
 				check_needed();
-				if (isFloat)
-				{
-					sprintf(tempbuf, "(trpt+1)->bup.ovals[%d] = *(int*)(void*)&(",
-						multi_oval-1);
-				}
-				else
-				{
-					sprintf(tempbuf, "(trpt+1)->bup.ovals[%d] = ",
-						multi_oval-1);
-				}
+				sprintf(tempbuf, "(trpt+1)->bup.ovals[%d] = ",
+					multi_oval-1);
 
 				multi_oval++;
-				if (isFloat)
-				{
-					cat30(tempbuf, now->lft, ");\n\t\t");
-				}
-				else
-				{
-					cat30(tempbuf, now->lft, ";\n\t\t");
-				}
+				cat30(tempbuf, now->lft, ";\n\t\t");
 			} else
 			{
-				if (isFloat)
-				{
-					cat3("(trpt+1)->bup.oval = *(int*)(void*)&(", now->lft, ");\n\t\t");
-				}
-				else
-				{
-					cat3("(trpt+1)->bup.oval = ", now->lft, ";\n\t\t");
-				}
+				cat3("(trpt+1)->bup.oval = ", now->lft, ";\n\t\t");
 			}
 			nocast = old_nocast;
 		}
@@ -3493,6 +3452,7 @@ putname(FILE *fd, char *pre, Lextok *n, int m, char *suff) /* varref */
 		{	if (terse
 			|| (n->lft
 			&&  n->lft->ntyp == CONST	// TODO PG - make comparison accorfing to types
+			&&	n->lft->constValKind == VALUE_INT
 			&&  n->lft->val < s->nel)
 			|| (!n->lft && s->nel > 0))
 			{	cat3("[", n->lft, "]");
@@ -3514,6 +3474,7 @@ putname(FILE *fd, char *pre, Lextok *n, int m, char *suff) /* varref */
 	} else
 	{	if (n->lft	/* effectively a scalar, but with an index */
 		&& (n->lft->ntyp != CONST
+		||	n->lft->constValKind != VALUE_INT
 		||  n->lft->val != 0))
 		{	fatal("ref to scalar '%s' using array index", (char *) ptr);
 	}	}

@@ -1342,8 +1342,8 @@ static const char *Proto[] = {
 	"	 short o_priority;",
 	"	#endif",
 	"	union {",
-	"	 int oval;",	/* single backup value of variable */
-	"	 int *ovals;",	/* ptr to multiple values */
+	"	 double oval;",	/* single backup value of variable */
+	"	 double *ovals;",	/* ptr to multiple values */
 	"	} bup;",
 	"}; /* end of struct Trail */",
 	"",
