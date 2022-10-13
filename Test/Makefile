@@ -1,12 +1,13 @@
 #Spin integration tests, based on the README_tests.txt and the provided examples
 
 BASE_DIR=../..
-SPIN?=${BASE_DIR}/Src/spin
+export SPIN?=${BASE_DIR}/Src/spin
 EXAMPLE_MODEL_DIR=${BASE_DIR}/Examples
 USER_TYPES_MODEL_DIR=${BASE_DIR}/Test/UserTypes
 FLOAT_MODEL_DIR=${BASE_DIR}/Test/Float
 FLOAT_DUMPING_MODEL_DIR=${FLOAT_MODEL_DIR}/Dumping
 FLOAT_CHANNEL_MODEL_DIR=${FLOAT_MODEL_DIR}/Channels
+FLOAT_CHANNEL_COMPLEX_TESTS_DIR=${FLOAT_CHANNEL_MODEL_DIR}/ComplexTests
 TEST_DIR=Out
 
 CC?=gcc
@@ -52,7 +53,11 @@ FLOAT_TESTS = \
 	test_simple_floats_through_channel \
 	test_ping_pong_with_floats_through_channel \
 	test_channel_with_floats_enumeration \
-	test_complex_structures_with_floats_in_channels
+	test_complex_structures_with_floats_in_channels \
+	test_channel_complex_tests_float_basic \
+	test_channel_complex_tests_float_basic_fail \
+	test_channel_complex_tests_float_compare \
+	test_channel_complex_tests_float_operations
 
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
@@ -615,4 +620,40 @@ test_complex_structures_with_floats_in_channels:
 	grep -q "ComplexFloatMessage.pml:80 (state 25)" ${TEST_DIR}/ComplexFloatMessage.sim.output
 	grep -q "ComplexFloatMessage.pml:51 (state 25) <valid end state>" ${TEST_DIR}/ComplexFloatMessage.sim.output
 	grep -q "ComplexFloatMessage.pml:91 (state 3) <valid end state>" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_basic:
+	echo "Test channel complex tests using floats - test-float-basic"
+	${CREATE_TEST_DIR}
+
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-basic/*	./
+	${MAKE} -C ${TEST_DIR}  
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_basic_fail:
+	echo "Test channel complex tests using floats - test-float-basic-fail"
+	${CREATE_TEST_DIR}
+
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-basic-fail/*	./
+	${MAKE} -C ${TEST_DIR}  
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_compare:
+	echo "Test channel complex tests using floats - test-float-compare"
+	${CREATE_TEST_DIR}
+
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-compare/*	./
+	${MAKE} -C ${TEST_DIR}  
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_operations:
+	echo "Test channel complex tests using floats - test-float-operations"
+	${CREATE_TEST_DIR}
+
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-operations/*	./
+	${MAKE} -C ${TEST_DIR}  
 	${DELETE_TEST_DIR}
