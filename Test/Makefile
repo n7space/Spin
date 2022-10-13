@@ -625,35 +625,73 @@ test_complex_structures_with_floats_in_channels:
 test_channel_complex_tests_float_basic:
 	echo "Test channel complex tests using floats - test-float-basic"
 	${CREATE_TEST_DIR}
-
 	cd ${TEST_DIR} && \
 	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-basic/*	./
-	${MAKE} -C ${TEST_DIR}  
+	echo "	test simulator"
+	cd ${TEST_DIR} && \
+	$(SPIN) system.pml > simulator.stdout
+	grep -q "state finished" ${TEST_DIR}/simulator.stdout
+	echo "	test verifier"
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 0" ${TEST_DIR}/verifier.stdout
 	${DELETE_TEST_DIR}
 
 test_channel_complex_tests_float_basic_fail:
 	echo "Test channel complex tests using floats - test-float-basic-fail"
 	${CREATE_TEST_DIR}
-
 	cd ${TEST_DIR} && \
 	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-basic-fail/*	./
-	${MAKE} -C ${TEST_DIR}  
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 1" ${TEST_DIR}/verifier.stdout
+	cd ${TEST_DIR} && \
+	${SPIN} -t -r -s system.pml > trace.stdout
+	grep -q "3.1415" ${TEST_DIR}/trace.stdout
 	${DELETE_TEST_DIR}
 
 test_channel_complex_tests_float_compare:
 	echo "Test channel complex tests using floats - test-float-compare"
 	${CREATE_TEST_DIR}
-
 	cd ${TEST_DIR} && \
 	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-compare/*	./
-	${MAKE} -C ${TEST_DIR}  
+	echo "	test simulator"
+	cd ${TEST_DIR} && \
+	$(SPIN) system.pml > simulator.stdout
+	grep -q "state finished" ${TEST_DIR}/simulator.stdout
+	echo "	test verifier"
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 0" ${TEST_DIR}/verifier.stdout
 	${DELETE_TEST_DIR}
 
 test_channel_complex_tests_float_operations:
 	echo "Test channel complex tests using floats - test-float-operations"
 	${CREATE_TEST_DIR}
-
 	cd ${TEST_DIR} && \
 	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-operations/*	./
-	${MAKE} -C ${TEST_DIR}  
+	echo "	test simulator"
+	cd ${TEST_DIR} && \
+	$(SPIN) system.pml > simulator.stdout
+	grep -q "state finished" ${TEST_DIR}/simulator.stdout
+	echo "	test verifier"
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 0" ${TEST_DIR}/verifier.stdout
 	${DELETE_TEST_DIR}
