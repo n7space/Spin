@@ -4,8 +4,6 @@ all: test-simulator test-verifier
 
 test-simulator:
 	echo "test-float-basic - test simulator"
-	pwd
-	echo ${SPIN} 
 	$(SPIN) system.pml | tee simulator.stdout
 	grep -q "state finished" simulator.stdout
 
