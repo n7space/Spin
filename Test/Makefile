@@ -1,10 +1,13 @@
 #Spin integration tests, based on the README_tests.txt and the provided examples
 
 BASE_DIR=../..
-SPIN?=${BASE_DIR}/Src/spin
+export SPIN?=${BASE_DIR}/Src/spin
 EXAMPLE_MODEL_DIR=${BASE_DIR}/Examples
 USER_TYPES_MODEL_DIR=${BASE_DIR}/Test/UserTypes
 FLOAT_MODEL_DIR=${BASE_DIR}/Test/Float
+FLOAT_DUMPING_MODEL_DIR=${FLOAT_MODEL_DIR}/Dumping
+FLOAT_CHANNEL_MODEL_DIR=${FLOAT_MODEL_DIR}/Channels
+FLOAT_CHANNEL_COMPLEX_TESTS_DIR=${FLOAT_CHANNEL_MODEL_DIR}/ComplexTests
 TEST_DIR=Out
 
 CC?=gcc
@@ -45,7 +48,16 @@ FLOAT_TESTS = \
 	test_float_literal_values \
 	test_float_arithmetic_operators \
 	test_float_arithmetic \
-	test_float_in_struct
+	test_float_in_struct \
+	test_float_can_be_dumped \
+	test_simple_floats_through_channel \
+	test_ping_pong_with_floats_through_channel \
+	test_channel_with_floats_enumeration \
+	test_complex_structures_with_floats_in_channels \
+	test_channel_complex_tests_float_basic \
+	test_channel_complex_tests_float_basic_fail \
+	test_channel_complex_tests_float_compare \
+	test_channel_complex_tests_float_operations
 
 .SILENT : ${EXAMPLE_TESTS} \
 	${TYPEDEF_TESTS} \
@@ -510,4 +522,176 @@ test_float_in_struct:
 	grep -q "106 transitions (= stored+matched)" ${TEST_DIR}/FloatInStruct.output
 	grep -q "0 atomic steps" ${TEST_DIR}/FloatInStruct.output
 	grep -q "Data is 101 and 10.10" ${TEST_DIR}/FloatInStruct.sim.output		
+	${DELETE_TEST_DIR}
+
+#Test float dumping 
+test_float_can_be_dumped:
+	echo "Test float dumping"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_DUMPING_MODEL_DIR}/FloatsCanBeDumped.pml > FloatsCanBeDumped.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_DUMPING_MODEL_DIR}/FloatsCanBeDumped.pml > FloatsCanBeDumped.sim.output
+	grep -q "pan:1: invalid end state (at depth 39)" ${TEST_DIR}/FloatsCanBeDumped.output
+	grep -q "State-vector 172 byte, depth reached 40, errors: 1" ${TEST_DIR}/FloatsCanBeDumped.output
+	grep -q "timeout" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "#processes: 1" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "float_var = 4.830000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "byte_var = 6" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "int_var = 234565" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "float_array\[0\] = 3.140000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "float_array\[1\] = 2.700000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].bit_field = 0" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].byte_field = 9" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].int_field = 3432" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].float_field = 5.560000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].inner_int = 21" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].floats.inner_float_array\[0\] = 0.250000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].floats.inner_float_array\[1\] = 1.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[0\].floats.inner_float_array\[2\] = 1.750000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[1\].inner_int = 22" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[0\].inner_float_struct_array\[1\].floats.inner_float_array\[1\] = 2.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].bit_field = 1" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].byte_field = 12" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].int_field = 3435" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].float_field = 8.559999" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].inner_float_struct_array\[1\].inner_int = 25" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "item_array\[1\].inner_float_struct_array\[1\].floats.inner_float_array\[1\] = 5.500000" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "queue 2 (struct_channel): \[22,1.250000,2.500000,2.750000\]\[24,3.250000,4.500000,4.750000\]" ${TEST_DIR}/FloatsCanBeDumped.sim.output
+	grep -q "FloatsCanBeDumped.pml:79 (state 53)" ${TEST_DIR}/FloatsCanBeDumped.sim.output		
+	${DELETE_TEST_DIR}
+
+#Test simple floats through channel 
+test_simple_floats_through_channel:
+	echo "Test simple floats through channel"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/SimpleFloatThroughChannel.pml > SimpleFloatThroughChannel.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/SimpleFloatThroughChannel.pml > SimpleFloatThroughChannel.sim.output
+	grep -q "errors: 0" ${TEST_DIR}/SimpleFloatThroughChannel.output
+	grep -q "first value = 2.700000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	grep -q "second value = 3.140000" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	grep -q "2 processes created" ${TEST_DIR}/SimpleFloatThroughChannel.sim.output
+	${DELETE_TEST_DIR}
+
+#Test ping pong with floats through channel 
+test_ping_pong_with_floats_through_channel:
+	echo "Test ping pong with floats through channel"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/PingPong.pml > PingPong.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/PingPong.pml > PingPong.sim.output
+	grep -q "errors: 0" ${TEST_DIR}/PingPong.output
+	grep -q "Got pong = 3.141500" ${TEST_DIR}/PingPong.sim.output
+	grep -q "2 processes created" ${TEST_DIR}/PingPong.sim.output
+	${DELETE_TEST_DIR}
+
+#Test channel with floats enumeration 
+test_channel_with_floats_enumeration:
+	echo "Test channel with floats enumeration"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ChannelsWithFloatsCanBeEnumerated.pml > ChannelsWithFloatsCanBeEnumerated.sim.output
+	grep -q ", errors: 0" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.output
+	grep -q "3.140000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
+	grep -q "2.700000" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
+	grep -q "2 processes created" ${TEST_DIR}/ChannelsWithFloatsCanBeEnumerated.sim.output
+	${DELETE_TEST_DIR}
+
+#Test complex structures with floats in channels
+test_complex_structures_with_floats_in_channels:
+	echo "Test complex structures with floats in channels"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	${SPIN} -run -a ${FLOAT_CHANNEL_MODEL_DIR}/ComplexFloatMessage.pml > ComplexFloatMessage.output
+	cd ${TEST_DIR} && \
+	${SPIN} ${FLOAT_CHANNEL_MODEL_DIR}/ComplexFloatMessage.pml > ComplexFloatMessage.sim.output
+	grep -q ", errors: 0" ${TEST_DIR}/ComplexFloatMessage.output
+	grep -q "Receiver: index=11, value=0.250000" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "Final message received!" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "queue 1 (queue): \[11,0.250000\]\[11,0.300000\]" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "queue 2 (dqueue): \[0.100000,0.200000,0.300000,0.400000,0.500000,0.600000,0.700000,0.800000,0.900000,0.750000,0,0.000000,52\]\[0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0,5.250000,0\]\[0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,45,0.000000,0\]" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "finalValue = 0.250000" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "finalIndex = 11" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "ComplexFloatMessage.pml:80 (state 25)" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "ComplexFloatMessage.pml:51 (state 25) <valid end state>" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	grep -q "ComplexFloatMessage.pml:91 (state 3) <valid end state>" ${TEST_DIR}/ComplexFloatMessage.sim.output
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_basic:
+	echo "Test channel complex tests using floats - test-float-basic"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-basic/*	./
+	echo "	test simulator"
+	cd ${TEST_DIR} && \
+	$(SPIN) system.pml > simulator.stdout
+	grep -q "state finished" ${TEST_DIR}/simulator.stdout
+	echo "	test verifier"
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 0" ${TEST_DIR}/verifier.stdout
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_basic_fail:
+	echo "Test channel complex tests using floats - test-float-basic-fail"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-basic-fail/*	./
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 1" ${TEST_DIR}/verifier.stdout
+	cd ${TEST_DIR} && \
+	${SPIN} -t -r -s system.pml > trace.stdout
+	grep -q "3.1415" ${TEST_DIR}/trace.stdout
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_compare:
+	echo "Test channel complex tests using floats - test-float-compare"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-compare/*	./
+	echo "	test simulator"
+	cd ${TEST_DIR} && \
+	$(SPIN) system.pml > simulator.stdout
+	grep -q "state finished" ${TEST_DIR}/simulator.stdout
+	echo "	test verifier"
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 0" ${TEST_DIR}/verifier.stdout
+	${DELETE_TEST_DIR}
+
+test_channel_complex_tests_float_operations:
+	echo "Test channel complex tests using floats - test-float-operations"
+	${CREATE_TEST_DIR}
+	cd ${TEST_DIR} && \
+	cp -r ${FLOAT_CHANNEL_COMPLEX_TESTS_DIR}/test-float-operations/*	./
+	echo "	test simulator"
+	cd ${TEST_DIR} && \
+	$(SPIN) system.pml > simulator.stdout
+	grep -q "state finished" ${TEST_DIR}/simulator.stdout
+	echo "	test verifier"
+	cd ${TEST_DIR} && \
+	$(SPIN) -a system.pml
+	cd ${TEST_DIR} && \
+	gcc -o pan pan.c
+	cd ${TEST_DIR} && \
+	./pan -a -n > verifier.stdout
+	grep -q "errors: 0" ${TEST_DIR}/verifier.stdout
 	${DELETE_TEST_DIR}

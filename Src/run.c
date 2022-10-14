@@ -616,11 +616,11 @@ printm(FILE *fd, Lextok *n)
 		}
 
 		if (n->lft->ismtyp)
-		{	j = n->lft->val;
+		{	j = n->lft->val;	// TODO PG - handle float value?
 		} else	/* constant */
-		{	j = eval(n->lft);
+		{	j = eval(n->lft);	// TODO PG - handle float value?
 		}
-		sr_buf(j, 1, s);
+		sr_buf(j, 1, s);	// TODO PG - handle float value in j
 		dotag(fd, GBuf);
 	}
 	return 1;
@@ -675,7 +675,7 @@ interprint(FILE *fd, Lextok *n)
 			 case 'e': strcpy(tBuf, GBuf);	/* event name */
 				   GBuf[0] = '\0';
 
-				   sr_buf(getInt(j), 1, t);
+				   sr_buf(getInt(j), 1, t);	// TODO PG - hanlde float in j value
 
 				   strcpy(lbuf, GBuf);
 				   strcpy(GBuf, tBuf);

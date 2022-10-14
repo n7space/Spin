@@ -38,10 +38,11 @@ static int	sa_snd(Queue *, Lextok *);
 static int	s_snd(Queue *, Lextok *);
 extern Lextok	**find_mtype_list(const char *);
 extern char	*which_mtype(const char *);
-extern void	sr_buf(int, int, const char *);
-extern void	sr_mesg(FILE *, int, int, const char *);
+void	sr_buf(int, int, const char *);
+void	sr_mesg(FILE *, int, int, const char *);
+void	sr_mesg_value(FILE *, Value, int, const char *);
 extern void	putarrow(int, int);
-static void	sr_talk(Lextok *, int, char *, char *, int, Queue *);
+static void	sr_talk(Lextok *, Value, char *, char *, int, Queue *);
 
 int
 cnt_mpars(Lextok *n)
@@ -328,14 +329,14 @@ a_snd(Queue *q, Lextok *n)
 		{	mtype_ck(q->mtp[i+j], m->lft);	/* 6.4.8 */
 		}
 		if ((verbose&16) && depth >= jumpsteps)
-		{	sr_talk(n, getInt(New), "Send ", "->", j, q); /* XXX j was i+j in 6.4.8 */
+		{	sr_talk(n, New, "Send ", "->", j, q); /* XXX j was i+j in 6.4.8 */
 		}
 		typ_ck(q->fld_width[i+j], Sym_typ(m->lft), "send");
 	}
 
 	if ((verbose&16) && depth >= jumpsteps)
 	{	for (i = j; i < q->nflds; i++)
-		{	sr_talk(n, 0, "Send ", "->", i, q);
+		{	sr_talk(n, intValue(0), "Send ", "->", i, q);
 		}
 		if (j < q->nflds)
 		{	printf("%3d: warning: missing params in send\n",
@@ -428,7 +429,7 @@ try_slot:
 	{	if (columns && !full)	/* was columns == 1 */
 			continue;
 		if ((verbose&8) && !Rvous && depth >= jumpsteps)
-		{	sr_talk(n, getInt(q->contents[i*q->nflds+j]),
+		{	sr_talk(n, (q->contents[i*q->nflds+j]),
 			(full && n->val < 2)?"Recv ":"[Recv] ", "<-", j, q);
 		}
 		if (!full)
@@ -449,7 +450,7 @@ try_slot:
 	if ((!columns || full)
 	&& (verbose&8) && !Rvous && depth >= jumpsteps)
 	for (i = j; i < q->nflds; i++)
-	{	sr_talk(n, 0,
+	{	sr_talk(n, intValue(0),
 		(full && n->val < 2)?"Recv ":"[Recv] ", "<-", i, q);
 	}
 	if (columns == 2 && full && !Rvous && depth >= jumpsteps)
@@ -464,7 +465,8 @@ static int
 s_snd(Queue *q, Lextok *n)
 {	Lextok *m;
 	RunList *rX, *sX = X_lst;	/* rX=recvr, sX=sendr */
-	int i, j = 0;	/* q field# */
+	int j = 0;	/* q field# */
+	Value i;
 
 	for (m = n->rgt; m && j < q->nflds; m = m->rgt, j++)
 	{	q->contents[j] = cast_val(q->fld_width[j], evalValue(m->lft), 0);
@@ -489,11 +491,11 @@ s_snd(Queue *q, Lextok *n)
 		rX = X_lst; X_lst = sX;
 
 		for (j = 0; m && j < q->nflds; m = m->rgt, j++)
-		{	sr_talk(n, eval(m->lft), "Sent ", "->", j, q);
+		{	sr_talk(n, evalValue(m->lft), "Sent ", "->", j, q);
 		}
-
-		for (i = j; i < q->nflds; i++)
-		{	sr_talk(n, 0, "Sent ", "->", i, q);
+		int tmp;
+		for (tmp = j; tmp < q->nflds; tmp++)
+		{	sr_talk(n, intValue(0), "Sent ", "->", tmp, q);
 		}
 
 		if (j < q->nflds)
@@ -517,16 +519,17 @@ s_snd(Queue *q, Lextok *n)
 
 				if (m->lft->ntyp != NAME
 				||  strcmp(m->lft->sym->name, "_") != 0)
-				{	i = eval(m->lft);
+				{	i = evalValue(m->lft);
 				} else
-				{	i = 0;
+				{	i = intValue(0);
 				}
 				if (verbose&8)
-				sr_talk(n_rem,i,"Recv ","<-",j,q_rem);
+					sr_talk(n_rem,i,"Recv ","<-",j,q_rem);
 			}
 			if (verbose&8)
-			for (i = j; i < q->nflds; i++)
-				sr_talk(n_rem, 0, "Recv ", "<-", j, q_rem);
+
+			for (tmp = j; tmp < q->nflds; tmp++)
+				sr_talk(n_rem, intValue(0), "Recv ", "<-", j, q_rem);
 			if (columns == 2)
 				putarrow(depth, depth);
 		}
@@ -612,7 +615,7 @@ docolumns(Lextok *n, char *tr, int v, int j, Queue *q)
 	} else
 		printf(",");
 	if (tr[0] == '[') printf("[");
-	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);
+	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);	// TODO PG - find proper scenario to activate and verify
 	if (j == q->nflds - 1)
 	{	if (tr[0] == '[') printf("]");
 		printf("\n");
@@ -637,7 +640,7 @@ qishidden(int q)
 }
 
 static void
-sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
+sr_talk(Lextok *n, Value v, char *tr, char *a, int j, Queue *q)
 {	char s[128];
 
 	if (qishidden(eval(n->lft)))
@@ -645,17 +648,30 @@ sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
 
 	if (columns)
 	{	if (columns == 2)
-			difcolumns(n, tr, v, j, q);
+			difcolumns(n, tr, getInt(v), j, q);		// TODO PG - handle Value in v
 		else
-			docolumns(n, tr, v, j, q);
+			docolumns(n, tr, getInt(v), j, q);
 		return;
 	}
 	if (xspin)
 	{	if ((verbose&4) && tr[0] != '[')
-		sprintf(s, "(state -)\t[values: %d",
-			eval(n->lft));
+		{
+			Value val = evalValue(n->lft);
+			if (val.kind == VALUE_FLOAT)
+				sprintf(s, "(state -)\t[values: %f",
+					val.value.floatValue);
+			else
+				sprintf(s, "(state -)\t[values: %d",
+					val.value.intValue);
+		}
 		else
-		sprintf(s, "(state -)\t[%d", eval(n->lft));
+		{
+			Value val = evalValue(n->lft);
+			if (val.kind == VALUE_FLOAT)
+				sprintf(s, "(state -)\t[%f", val.value.floatValue);
+			else
+				sprintf(s, "(state -)\t[%d", val.value.intValue);
+		}
 		if (strncmp(tr, "Sen", 3) == 0)
 			strcat(s, "!");
 		else
@@ -682,7 +698,7 @@ sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
 	} else
 	{	printf(",");
 	}
-	sr_mesg(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);
+	sr_mesg_value(stdout, v, q->fld_width[j] == MTYPE, q->mtp[j]);	// TODO PG - find scenario to activate and verify
 
 	if (j == q->nflds - 1)
 	{	if (xspin)
@@ -698,6 +714,8 @@ sr_talk(Lextok *n, int v, char *tr, char *a, int j, Queue *q)
 	fflush(stdout);
 }
 
+/* TODO sr_buf_f and sr_buf should be refactored 
+- however, more investigation needed on for loop meaning */
 void
 sr_buf_f(float v, int j, const char *s)
 {	int cnt = 1; Lextok *n;
@@ -761,6 +779,26 @@ sr_mesg(FILE *fd, int v, int j, const char *s)
 }
 
 void
+sr_mesg_const_token(FILE *fd, const Lextok *token, const char *s)
+{	if (token->constValKind == VALUE_FLOAT)
+		sr_mesg_f(fd, getFloatTokenValue(token), token->ismtyp, s);
+	else
+		sr_mesg(fd, token->val, token->ismtyp, s);
+}
+
+void
+sr_mesg_value(FILE *fd, const Value val, int isMTYPE, const char *s)
+{	if (val.kind == VALUE_FLOAT)
+	{	sr_mesg_f(fd, val.value.floatValue,
+			isMTYPE, s);
+	}
+	else
+	{	sr_mesg(fd, val.value.intValue,
+			isMTYPE, s);	
+	}
+}
+
+void
 doq(Symbol *s, int n, RunList *r)
 {	Queue *q;
 	int j, k;
@@ -790,13 +828,13 @@ doq(Symbol *s, int n, RunList *r)
 		}
 
 		for (k = 0; k < q->qlen; k++)
-		{	printf("[");
+		{	printf("[");			// dumping of queue content
 			for (j = 0; j < q->nflds; j++)
 			{	if (j > 0) printf(",");
-				sr_mesg(stdout,
-					getInt(q->contents[k*q->nflds+j]),	// TODO PG - handle float in queues?
-					q->fld_width[j] == MTYPE,
-					q->mtp[j]);
+				Value content =  q->contents[k*q->nflds+j];
+				sr_mesg_value(stdout, content,
+						q->fld_width[j] == MTYPE,
+						q->mtp[j] );
 			}
 			printf("]");
 		}

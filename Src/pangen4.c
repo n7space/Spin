@@ -139,15 +139,9 @@ undostmnt(Lextok *now, int m)
 					if (!v->lft->sym
 					||  strcmp(v->lft->sym->name, "_") != 0)
 					{
-						const unsigned short variableType = getType(v->lft);
-					    const int isFloat = variableType == FLOAT;
-						if (isFloat)
-							fprintf(fd_tb, "*(int*)(void*)&(");
 						nocast=1;
 						putstmnt(fd_tb, v->lft, m);
 						nocast=0;
-						if (isFloat)
-							fprintf(fd_tb, ")");
 						fprintf(fd_tb, " = trpt->bup.oval");
 						if (multi_oval > 0)
 							fprintf(fd_tb, "s[%d]", jj);
@@ -172,16 +166,9 @@ undostmnt(Lextok *now, int m)
 
 	case ASGN:
 		if (is_typedef(check_track(now))) { break; }
-
-		const unsigned short variableType = getType(now->lft);
-		const int isFloat = variableType == FLOAT;
-		if (isFloat)
-			fprintf(fd_tb, "*(int*)(void*)&(");
 		nocast=1;
 		putstmnt(fd_tb, now->lft, m);
 		nocast=0;
-		if (isFloat)
-			fprintf(fd_tb, ")");
 		fprintf(fd_tb, " = trpt->bup.oval");
 		if (multi_oval > 0)
 		{	multi_oval--;

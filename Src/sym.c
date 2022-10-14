@@ -159,11 +159,21 @@ trackvar(Lextok *n, Lextok *m)
 				sp->hidden |= 8;
 		}
 		break;
-	case CONST:		// TODO PG - varify for floats
-		if (m->val != 0 && m->val != 1)
-			sp->hidden |= 4;
-		if (m->val < 0 || m->val > 256)
-			sp->hidden |= 8; /* ditto byte-equiv */
+	case CONST:		// TODO PG - not sure if float const are well handled here
+		if (m->constValKind == VALUE_FLOAT)
+		{
+			float val = getFloatTokenValue(m);
+			if (val != 0.0 && val != 1.0)
+				sp->hidden |= 4;
+			if (val < 0.0 || val > 256.0)
+				sp->hidden |= 8; /* ditto byte-equiv */
+		}
+		else
+		{	if (m->val != 0 && m->val != 1)
+				sp->hidden |= 4;
+			if (m->val < 0 || m->val > 256)
+				sp->hidden |= 8; /* ditto byte-equiv */
+		}
 		break;
 	default:	/* unknown */
 		sp->hidden |= (4|8); /* not known bit-equiv */
@@ -536,7 +546,7 @@ symvar(Symbol *sp)
 	else if (is_typedef(sp->type) && sp->Snm != NULL) /* Frank Weil, 2.9.8 */
 		printf("\t%s", sp->Snm->name);
 	else
-		printf("\t%d", eval(sp->ini));
+		printf("\t%d", eval(sp->ini));	// TODO PG - handle floats
 
 	if (sp->owner)
 		printf("\t<:struct-field:>");

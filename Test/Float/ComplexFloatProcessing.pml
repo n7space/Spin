@@ -1,15 +1,5 @@
 #define STORE_SIZE 10
 
-// This is needed because dot notation is not yet supported by the lexer
-hidden float tmpN;
-hidden float tmpD;
-
-inline makeFloat(f, nominator, denominator) {
-    tmpN = nominator;
-    tmpD = denominator;
-    f = tmpN / tmpD;
-}
-
 typedef Message {
     int index;
     float value;
@@ -18,9 +8,6 @@ typedef Message {
 typedef Data {
     float values[STORE_SIZE];
 }
-
-Data data;
-chan queue = [0] of {Message};
 
 inline random10(x) {
     if
@@ -39,15 +26,15 @@ inline random10(x) {
 
 inline randomFloat(x) {
     if    
-    ::makeFloat(x, 1, 10);
-    ::makeFloat(x, 2, 10);
-    ::makeFloat(x, 3, 10);
-    ::makeFloat(x, 4, 10);
-    ::makeFloat(x, 5, 10);
-    ::makeFloat(x, 6, 10);
-    ::makeFloat(x, 7, 10);
-    ::makeFloat(x, 8, 10);
-    ::makeFloat(x, 9, 10);    
+    ::x = 0.1;
+    ::x = 0.2;
+    ::x = 0.3;
+    ::x = 0.4;
+    ::x = 0.5;
+    ::x = 0.6;
+    ::x = 0.7;
+    ::x = 0.8;
+    ::x = 0.9;    
     fi
 }
 
