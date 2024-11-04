@@ -93,7 +93,8 @@ setval(Lextok *v, Value n)
 	if (v->sym->context && v->sym->type)
 		return setlocal(v, n);
 	if (!v->sym->type)
-		v->sym = lookup(v->sym->name);
+	{	v->sym = lookup(v->sym->name);
+	}
 	return setglobal(v, n);
 }
 

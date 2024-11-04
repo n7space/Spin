@@ -109,8 +109,12 @@ int
 qfull(Lextok *n)
 {	int whichq = eval(n->lft)-1;
 
-	if (whichq < MAXQ && whichq >= 0 && ltab[whichq])
-		return (ltab[whichq]->qlen >= ltab[whichq]->nslots);
+	if (whichq < MAXQ
+	&&  whichq >= 0			// valid qid
+	&&  ltab[whichq]		// q exists
+	&&  ltab[whichq]->nslots > 0)	// !q_is_sync added 02/24
+	{	return (ltab[whichq]->qlen >= ltab[whichq]->nslots);
+	}
 	return 0;
 }
 
@@ -325,13 +329,15 @@ a_snd(Queue *q, Lextok *n)
 	{	Value New = evalValue(m->lft);
 		q->contents[i+j] = cast_val(q->fld_width[j], New, 0);
 
-		if (q->fld_width[i+j] == MTYPE)
-		{	mtype_ck(q->mtp[i+j], m->lft);	/* 6.4.8 */
+		if (q->fld_width[j] == MTYPE)		/* may 30, 2023: i+j -> j */
+		{	mtype_ck(q->mtp[j], m->lft);	/* 6.4.8 - may 30: same change */
 		}
 		if ((verbose&16) && depth >= jumpsteps)
 		{	sr_talk(n, New, "Send ", "->", j, q); /* XXX j was i+j in 6.4.8 */
 		}
-		typ_ck(q->fld_width[i+j], Sym_typ(m->lft), "send");
+
+		/* may 30, 2023: the field types are 0..nflds, not i+0..nflds */
+		typ_ck(q->fld_width[j], Sym_typ(m->lft), "send");
 	}
 
 	if ((verbose&16) && depth >= jumpsteps)
@@ -363,8 +369,8 @@ try_slot:
 	/* test executability */
 	for (m = n->rgt, j=0; m && j < q->nflds; m = m->rgt, j++)
 	{
-		if (q->fld_width[i*q->nflds+j] == MTYPE)
-		{	mtype_ck(q->mtp[i*q->nflds+j], m->lft);	/* 6.4.8 */
+		if (q->fld_width[j] == MTYPE)	/* may 30, 2023: i*q->nflds+j -> j */
+		{	mtype_ck(q->mtp[j], m->lft);	/* 6.4.8 -- may 30, same change */
 		}
 
 		if (m->lft->ntyp == CONST
@@ -920,7 +926,7 @@ typedef struct BaseName {
 
 static BaseName *bsn;
 
-void
+static void
 newbasename(char *s)
 {	BaseName *b;
 
@@ -938,7 +944,7 @@ newbasename(char *s)
 	bsn = b;
 }
 
-void
+static void
 delbasename(char *s)
 {	BaseName *b, *prv = (BaseName *) 0;
 
@@ -956,7 +962,7 @@ delbasename(char *s)
 	}	}
 }
 
-void
+static void
 checkindex(char *s, char *t)
 {	BaseName *b;
 
@@ -970,7 +976,7 @@ checkindex(char *s, char *t)
 	}	}
 }
 
-void
+static void
 scan_tree(Lextok *t, char *mn, char *mx)
 {	char sv[512];
 	char tmp[32];
@@ -981,14 +987,17 @@ scan_tree(Lextok *t, char *mn, char *mx)
 	lineno = t->ln;
 
 	if (t->ntyp == NAME)
-	{	if (strlen(t->sym->name) + strlen(mn) > 256) // conservative
+	{	if (strlen(t->sym->name) + strlen(mn) > 512)
 		{	fatal("name too long", t->sym->name);
 		}
 
 		strcat(mn, t->sym->name);
-		strcat(mx, t->sym->name);
+
 		if (t->lft)		/* array index */
-		{	strcat(mn, "[]");
+		{	if(strlen(t->sym->name) + strlen("[]") > 512)
+            {	fatal("name too long", t->sym->name);
+            }
+            strcat(mn, "[]");
 			newbasename(mn);
 				strcpy(sv, mn);		/* save */
 				strcpy(mn, "");		/* clear */
@@ -1017,7 +1026,7 @@ scan_tree(Lextok *t, char *mn, char *mx)
 	lineno = oln;
 }
 
-void
+static void
 no_nested_array_refs(Lextok *n)	/* a [ a[1] ] with a[1] = 1, causes trouble in pan.b */
 {	char mn[512];
 	char mx[512];
