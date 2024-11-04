@@ -6,4 +6,4 @@
  * Tool documentation is available at http://spinroot.com
  */
 
-#define SpinVersion	"Spin Version 6.5.2 -- 21 June 2024"
+#define SpinVersion	"Spin Version 6.5.2 -- 21 June 2024 + N7S Custom - Work-in-Progress"
