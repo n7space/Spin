@@ -14,6 +14,7 @@
 #include <unistd.h>
 #endif
 #include <stdarg.h>
+#include <stdlib.h>
 
 #define YYMAXDEPTH	20000	/* default is 10000 */
 #define YYDEBUG		0
